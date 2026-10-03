@@ -5,6 +5,7 @@ import { AdminLayout } from './components/layout/AdminLayout';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { LandingPage } from './pages/LandingPage';
 import { SearchResultsPage } from './pages/SearchResultsPage';
+import { ProductDetailsPage } from './pages/ProductDetailsPage';
 import { CartProvider } from './context/CartContext';
 
 function App() {
@@ -15,7 +16,9 @@ function App() {
           <Route path="/" element={<CustomerLayout />}>
             <Route index element={<LandingPage />} />
             <Route path="category/:id" element={<SearchResultsPage />} />
+            <Route path="product/:id" element={<ProductDetailsPage />} />
             <Route path="cart" element={<PlaceholderPage title="Shopping Cart" />} />
+            <Route path="checkout" element={<PlaceholderPage title="Checkout" />} />
             <Route path="login" element={<PlaceholderPage title="Login / Authentication" />} />
             <Route path="search" element={<SearchResultsPage />} />
           </Route>
