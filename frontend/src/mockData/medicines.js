@@ -10,6 +10,7 @@ export const MOCK_MEDICINES = [
     price: 36,
     unit: 'Strip',
     rating: 4.9,
+    category: 'fever',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBf8QgTeefksxI4jClTU-PDm5OQGVzeqSviWKknUQk2hH5iwHllB_t5r66_8hNU2NhKf8S2XjuM3BefCKC0GCSUX9L8XVd-EYMaJ8JwU5NXz9caJugnojSHHG0KPp2KiwJ7iZ09un8E53fvU7vNufU9X3dKh4YjZkZJWIb_m6hwU39LDq6QaRO_pV86Q22FbrHsX90z9msuDxPMvrJera8fBrFq3NY17SYtrnRNfvCihcC4rvsIMXUk'
   },
   {
@@ -23,6 +24,7 @@ export const MOCK_MEDICINES = [
     price: 70,
     unit: 'Strip',
     rating: 4.8,
+    category: 'gastric',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBQj3-lgFODFI5vzOkC4eapSi8EnH7Nb4M5OUcW69JUvPSPCmf7nRyL_hqSX_NHnikYAurvlLX6Qf6_zLn8f3f222UZya3RloN3579elgODymD0d9vZgOTp3MLu2R-Ma2o2APRT4kKjiZDY_9mQeD9hsxRUx6wr3MBuFfywXsSnyj_KkC_P96CwTtgWp_Nyxq05T9drSiozNdLu9jMasnthMq5A0Jn6QBebJ3jrIgQQn0miKJb-c8Vs'
   },
   {
@@ -36,6 +38,7 @@ export const MOCK_MEDICINES = [
     price: 175,
     unit: 'Strip',
     rating: 4.9,
+    category: 'respiratory',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBeDFEaSDObBgWG7mxSHvgK6s8c859NxIdvWWrvxYar3WjA6_HnEcYy5GCRXaBbm81KYRHKnyjub6Kg2ltQjdV2Wm0x5-GKDthSatrXU1PkqH0MdjBlDFO_op3DKMEBAOWE7EDbmqStL4_aYS9MASteW9zDSlOus4G3KLEdl8ShmqtgRV8mJKJjG81UEA7Ge4Tde0CR81FCQv5fcVDMyJXAUQpe_WnxatKFDnpnsaBZ-LqhkoUa0TGg'
   },
   {
@@ -49,7 +52,8 @@ export const MOCK_MEDICINES = [
     price: 110,
     unit: 'Bottle',
     rating: 4.7,
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD7KCYmVX6AzMCtddeVWh3n0xdSdT8jLrl6UgD_9g_7-4IsryUiVmVIsdvCIxXQQGKTaxxpC8gOuIqdwggupWLEU4iFuIpl40eotCJRa6VbmhbqWvy14BLpxcDn3rB_1NSeEG7s7LldxTTz8DzKndBFIreIHBMorxMRb9XzkSpPjB_09irQd93nNPc7HPuts5prUaLYDHIgcNtm5o3FZzIeuCDVVl6RXB2ntmyvAMb3R0cnRA_JCZL9' // Fallback image for now
+    category: 'hygiene',
+    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD7KCYmVX6AzMCtddeVWh3n0xdSdT8jLrl6UgD_9g_7-4IsryUiVmVIsdvCIxXQQGKTaxxpC8gOuIqdwggupWLEU4iFuIpl40eotCJRa6VbmhbqWvy14BLpxcDn3rB_1NSeEG7s7LldxTTz8DzKndBFIreIHBMorxMRb9XzkSpPjB_09irQd93nNPc7HPuts5prUaLYDHIgcNtm5o3FZzIeuCDVVl6RXB2ntmyvAMb3R0cnRA_JCZL9'
   },
   {
     id: 'm5',
@@ -62,6 +66,91 @@ export const MOCK_MEDICINES = [
     price: 1650,
     unit: 'Kit',
     rating: 4.9,
+    category: 'devices',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAlQKws2uu6N05JRF-qHVdhM9WY_djUwbSdt92sCwqU7XEY---tMRMHM5LS8f7ROwnQ7jHbQrcZsLcuUJX79Rf5L1WW3E0q6KesxEEO8sZZa9FoWW7LzKQpdMZDGIr0g2P0IhT0bvtT42hC1yJehYJa8W2VPSkfjnKdxfiT2DxAa3bC2RZXtjIrx8mu6SPzQMrVrEiH7V2zoyR_IiglKkdnpc3PDUSopc6bvEts7OFer-ZueeT_cdry'
+  },
+  {
+    id: 'm6',
+    name: 'Seclo 20',
+    genericName: 'Omeprazole BP 20mg',
+    manufacturer: 'Square Pharmaceuticals',
+    isOtc: true,
+    form: 'Capsule',
+    packSize: '10',
+    price: 60,
+    unit: 'Strip',
+    rating: 4.7,
+    category: 'gastric',
+    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAuRLT6bze253pAy47pamU_u64wCAz50JPJx-uWBuzfrGz75RZq24XX2Sb7FSbGrqiWbhgGR1Mz9RPCZv1pkT2bcY_fVBbRU5hbIA0eOvsQlWWVhzN4aOzc8AUwojXuBvGYVycyTNZV8pJ8i5MBXAdF_-xhNz82wcDHGaEbPrGmt6Gvrxx0YmW_vC3UwRAr2A4awkSKVvBRSM-MMug1pZVbhdmTzPpPGEN6W0C5zQtmvlEuNHxmXnF3'
+  },
+  {
+    id: 'm7',
+    name: 'Nexum 40',
+    genericName: 'Esomeprazole 40mg',
+    manufacturer: 'Beximco Pharmaceuticals',
+    isOtc: false,
+    form: 'Tablet',
+    packSize: '10',
+    price: 100,
+    unit: 'Strip',
+    rating: 4.9,
+    category: 'gastric',
+    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCbxasz4UIZ175dmt3DPySf7ohXO2Ew9TxZdlYIPV3hIe7J7utIuANXsnD1fW6ZdiBvOGQFMOwhN_BBd6b57qrHp1Diy_10v6GQ7ojrEGR22PhjmGR2wuvoSLy5Cri-rC2MxF8kc2slC6pWaHCHcEpRcMWVOHgB0yhUBcGTOFBY4r5FXZQVM3RC1q6u2iQhtKIKYGIcrp5iukfWzgdSu9MdFSZJ79dR6dZ2cF7jXfTxwKCjQ_T-1DzP'
+  },
+  {
+    id: 'm8',
+    name: 'Comet 500',
+    genericName: 'Metformin Hydrochloride 500mg',
+    manufacturer: 'Square Pharmaceuticals',
+    isOtc: false,
+    form: 'Tablet',
+    packSize: '10',
+    price: 45,
+    unit: 'Strip',
+    rating: 4.6,
+    category: 'diabetes',
+    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBf8QgTeefksxI4jClTU-PDm5OQGVzeqSviWKknUQk2hH5iwHllB_t5r66_8hNU2NhKf8S2XjuM3BefCKC0GCSUX9L8XVd-EYMaJ8JwU5NXz9caJugnojSHHG0KPp2KiwJ7iZ09un8E53fvU7vNufU9X3dKh4YjZkZJWIb_m6hwU39LDq6QaRO_pV86Q22FbrHsX90z9msuDxPMvrJera8fBrFq3NY17SYtrnRNfvCihcC4rvsIMXUk'
+  },
+  {
+    id: 'm9',
+    name: 'Bizoran 5/20',
+    genericName: 'Amlodipine + Olmesartan Medoxomil',
+    manufacturer: 'Incepta Pharmaceuticals',
+    isOtc: false,
+    form: 'Tablet',
+    packSize: '10',
+    price: 120,
+    unit: 'Strip',
+    rating: 4.8,
+    category: 'cardiac',
+    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBf8QgTeefksxI4jClTU-PDm5OQGVzeqSviWKknUQk2hH5iwHllB_t5r66_8hNU2NhKf8S2XjuM3BefCKC0GCSUX9L8XVd-EYMaJ8JwU5NXz9caJugnojSHHG0KPp2KiwJ7iZ09un8E53fvU7vNufU9X3dKh4YjZkZJWIb_m6hwU39LDq6QaRO_pV86Q22FbrHsX90z9msuDxPMvrJera8fBrFq3NY17SYtrnRNfvCihcC4rvsIMXUk'
+  },
+  {
+    id: 'm10',
+    name: 'Finix 20',
+    genericName: 'Rabeprazole Sodium 20mg',
+    manufacturer: 'Opsonin Pharma',
+    isOtc: true,
+    form: 'Tablet',
+    packSize: '10',
+    price: 60,
+    unit: 'Strip',
+    rating: 4.5,
+    category: 'gastric',
+    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBf8QgTeefksxI4jClTU-PDm5OQGVzeqSviWKknUQk2hH5iwHllB_t5r66_8hNU2NhKf8S2XjuM3BefCKC0GCSUX9L8XVd-EYMaJ8JwU5NXz9caJugnojSHHG0KPp2KiwJ7iZ09un8E53fvU7vNufU9X3dKh4YjZkZJWIb_m6hwU39LDq6QaRO_pV86Q22FbrHsX90z9msuDxPMvrJera8fBrFq3NY17SYtrnRNfvCihcC4rvsIMXUk'
+  },
+  {
+    id: 'm11',
+    name: 'Entacyd Plus',
+    genericName: 'Magaldrate + Simethicone',
+    manufacturer: 'Square Pharmaceuticals',
+    isOtc: true,
+    form: 'Suspension',
+    packSize: '1',
+    price: 85,
+    unit: 'Bottle',
+    rating: 4.6,
+    category: 'gastric',
+    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDV78cFoPePjUj7Wv-_b2IWR4wovBLx2z4rKLYjNI-jmyTebZ7bOu77RomE4_Ixc3ZcvRt6VYnK6YU0MBLQ3zxnLtA_3UVJouinRl5uUCCjfGVZOLIyxOMnGqQOHqz26XhJLGVZsisgcew4G3tHdZSjPdKw74OSxeExNaoMq0RcYNrompdqL4PU9lHNV7tQ7D_w8-uJv3QrWhaQhd9KMd75zCbaQayYoC6TqgUlfjqbyK_STcvEogcb'
   }
 ];
