@@ -1,0 +1,28 @@
+# Node / React
+node_modules/
+dist/
+.vite/
+
+# Java / Maven
+target/
+.mvn/wrapper/maven-wrapper.jar
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
