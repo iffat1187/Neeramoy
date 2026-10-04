@@ -13,10 +13,14 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
+import { OrderProvider } from './context/OrderContext';
+import { OrdersPage } from './pages/OrdersPage';
+import { OrderDetailsPage } from './pages/OrderDetailsPage';
 
 function App() {
   return (
     <AuthProvider>
+      <OrderProvider>
       <CartProvider>
         <BrowserRouter>
           <Routes>
@@ -30,6 +34,8 @@ function App() {
               <Route path="login" element={<LoginPage />} />
               <Route path="register" element={<RegisterPage />} />
               <Route path="search" element={<SearchResultsPage />} />
+              <Route path="orders" element={<OrdersPage />} />
+              <Route path="orders/:orderId" element={<OrderDetailsPage />} />
             </Route>
 
             <Route path="/admin" element={<AdminLayout />}>
@@ -41,6 +47,7 @@ function App() {
           </Routes>
         </BrowserRouter>
       </CartProvider>
+      </OrderProvider>
     </AuthProvider>
   );
 }

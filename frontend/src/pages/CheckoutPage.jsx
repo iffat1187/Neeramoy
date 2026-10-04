@@ -4,11 +4,13 @@ import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useOrder } from '../context/OrderContext';
 
 export const CheckoutPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isLoggedIn, user } = useAuth();
+  const { addOrder } = useOrder();
   const { 
     cartItems, 
     cartCount, 
@@ -94,7 +96,6 @@ export const CheckoutPage = () => {
   const handlePlaceOrder = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      // Navigate to order confirmation and pass state
       const orderDetails = {
         orderId: 'ORD-' + Math.floor(100000 + Math.random() * 900000),
         date: new Date().toISOString(),
@@ -112,7 +113,9 @@ export const CheckoutPage = () => {
           phone: formData.phone
         }
       };
-      clearCart();
+      
+      // Store order globally and navigate to confirmation
+      addOrder(orderDetails);
       navigate('/order-confirmation', { state: { orderDetails }, replace: true });
     } else {
       window.scrollTo({ top: 0, behavior: 'smooth' });
