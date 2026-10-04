@@ -6,6 +6,7 @@ import { PlaceholderPage } from './pages/PlaceholderPage';
 import { LandingPage } from './pages/LandingPage';
 import { SearchResultsPage } from './pages/SearchResultsPage';
 import { ProductDetailsPage } from './pages/ProductDetailsPage';
+import { CartPage } from './pages/CartPage';
 import { CartProvider } from './context/CartContext';
 
 function App() {
@@ -17,7 +18,7 @@ function App() {
             <Route index element={<LandingPage />} />
             <Route path="category/:id" element={<SearchResultsPage />} />
             <Route path="product/:id" element={<ProductDetailsPage />} />
-            <Route path="cart" element={<PlaceholderPage title="Shopping Cart" />} />
+            <Route path="cart" element={<CartPage />} />
             <Route path="checkout" element={<PlaceholderPage title="Checkout" />} />
             <Route path="login" element={<PlaceholderPage title="Login / Authentication" />} />
             <Route path="search" element={<SearchResultsPage />} />
