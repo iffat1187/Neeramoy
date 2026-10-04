@@ -9,7 +9,7 @@ export const Footer = () => {
           
           <div className="space-y-space-md">
             <div className="flex items-center gap-space-sm">
-              <img alt="Neeramoy Brand Logo" className="h-7 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WevWq68kahKBgmF-DHxxsQi68HIUK_Skiskpaf1OD1uWIsR0J5srB6HNv5Dd8Pcz9G5gdHmnkF227BBj4IPzh1V0F2PPqLZnHYdGw9RZmh-xAKbdPkH9p3nb7u9t4W6Ipq5swim3rh3lXigrlPzZD8s36VCiY5y-133nBsyQY9Ifn-0paSzSHlD8Uady3B6vdQXGAxuG-fv61GTe37U2sC4qUA86rOLVx-G9f72hdcee3ymrasQg6VYKM" />
+              <img alt="Neeramoy Brand Logo" className="h-7 w-auto object-contain" src="/logo.png" />
               <span className="font-headline-sm text-headline-sm text-primary font-bold">নিরাময় হেলথকেয়ার</span>
             </div>
             <p className="font-body-sm text-body-sm leading-relaxed">Government licensed digital pharmacy platform ensuring 100% genuine temperature-monitored medicines delivered across Bangladesh with clinical vigilance.</p>

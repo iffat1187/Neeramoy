@@ -37,7 +37,7 @@ export const Navbar = () => {
       {/* Main Bar */}
       <div className="h-20 max-w-7xl mx-auto px-margin-desktop flex items-center justify-between gap-space-lg">
         <Link to="/" className="flex items-center gap-space-xs shrink-0">
-          <img src="https://lh3.googleusercontent.com/aida/AEtjO1WevWq68kahKBgmF-DHxxsQi68HIUK_Skiskpaf1OD1uWIsR0J5srB6HNv5Dd8Pcz9G5gdHmnkF227BBj4IPzh1V0F2PPqLZnHYdGw9RZmh-xAKbdPkH9p3nb7u9t4W6Ipq5swim3rh3lXigrlPzZD8s36VCiY5y-133nBsyQY9Ifn-0paSzSHlD8Uady3B6vdQXGAxuG-fv61GTe37U2sC4qUA86rOLVx-G9f72hdcee3ymrasQg6VYKM" alt="Neeramoy Logo" className="h-8 w-auto object-contain" />
+          <img src="/logo.png" alt="Neeramoy Logo" className="h-8 w-auto object-contain" />
           <div className="flex flex-col">
             <span className="font-headline-md text-headline-md text-primary tracking-tight font-bold">নিরাময়</span>
             <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[10px]">Healthcare</span>
