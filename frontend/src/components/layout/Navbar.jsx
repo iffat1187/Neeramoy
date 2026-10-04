@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 
 export const Navbar = () => {
   const navigate = useNavigate();
   const { cartCount, cartTotal } = useCart();
+  const { user, isLoggedIn, logout } = useAuth();
   
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
@@ -57,12 +59,14 @@ export const Navbar = () => {
             <span>প্রেসক্রিপশন আপলোড</span>
           </button>
           
-          <Link to="/login" className="hidden sm:flex items-center gap-2 px-space-sm py-2 rounded-lg text-on-surface-variant hover:text-primary transition-colors">
-            <span className="material-symbols-outlined text-[24px]">receipt_long</span>
-            <div className="flex flex-col text-left">
-              <span className="font-label-sm font-bold text-on-surface">Orders</span>
-            </div>
-          </Link>
+          {isLoggedIn && (
+            <Link to="/orders" className="hidden sm:flex items-center gap-2 px-space-sm py-2 rounded-lg text-on-surface-variant hover:text-primary transition-colors">
+              <span className="material-symbols-outlined text-[24px]">receipt_long</span>
+              <div className="flex flex-col text-left">
+                <span className="font-label-sm font-bold text-on-surface">Orders</span>
+              </div>
+            </Link>
+          )}
 
           <Link to="/cart" className="flex items-center gap-2 bg-surface-container px-space-md py-2 rounded-xl hover:bg-surface-container-high transition-colors">
             <div className="relative flex items-center justify-center">
@@ -79,14 +83,31 @@ export const Navbar = () => {
             </div>
           </Link>
 
-          <Link to="/login" className="hidden lg:flex items-center gap-2 pl-space-xs cursor-pointer group">
-            <div className="w-9 h-9 rounded-full bg-surface-container-high flex items-center justify-center text-primary group-hover:bg-primary-container transition-colors">
-              <span className="material-symbols-outlined text-[20px]">person</span>
+          {isLoggedIn ? (
+            <div className="hidden lg:flex items-center gap-3 pl-space-xs cursor-pointer group relative">
+              <div className="flex items-center gap-2 group-hover:opacity-80">
+                <div className="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold">
+                  {user.name.charAt(0)}
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="font-label-sm font-bold text-on-surface">{user.name.split(' ')[0]}</span>
+                  <span className="text-[10px] text-on-surface-variant">Account</span>
+                </div>
+              </div>
+              <div className="absolute top-full right-0 mt-2 w-48 bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant/20 hidden group-hover:block overflow-hidden py-1">
+                <button className="w-full text-left px-4 py-2 hover:bg-surface-container text-body-sm text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px]">person</span> Profile
+                </button>
+                <button onClick={logout} className="w-full text-left px-4 py-2 hover:bg-error-container/20 text-body-sm text-error flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px]">logout</span> Logout
+                </button>
+              </div>
             </div>
-            <div className="flex flex-col text-left">
-              <span className="font-label-sm font-bold text-on-surface">Account</span>
-            </div>
-          </Link>
+          ) : (
+            <Link to="/login" className="hidden lg:flex items-center gap-2 pl-space-xs cursor-pointer text-primary hover:text-primary-container-dark font-bold font-label-lg transition-colors">
+              Login
+            </Link>
+          )}
         </div>
       </div>
 

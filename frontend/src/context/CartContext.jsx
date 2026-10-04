@@ -6,6 +6,7 @@ export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
+  const [deliveryMethod, setDeliveryMethod] = useState('standard');
 
   const addToCart = (product, quantity = 1) => {
     setCartItems(prev => {
@@ -41,7 +42,7 @@ export const CartProvider = ({ children }) => {
     return acc;
   }, 0);
 
-  const deliveryCharge = cartItems.length > 0 ? 60 : 0; // Flat 60 BDT delivery
+  const deliveryCharge = cartItems.length > 0 ? (deliveryMethod === 'express' ? 120 : 60) : 0;
   const cartTotal = cartSubtotal + deliveryCharge;
 
   return (
@@ -54,6 +55,8 @@ export const CartProvider = ({ children }) => {
       cartCount, 
       cartSubtotal,
       cartSavings,
+      deliveryMethod,
+      setDeliveryMethod,
       deliveryCharge,
       cartTotal 
     }}>
