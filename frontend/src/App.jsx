@@ -21,6 +21,8 @@ import { AccountLayout } from './components/layout/AccountLayout';
 import { DashboardPage } from './pages/account/DashboardPage';
 import { ProfilePage } from './pages/account/ProfilePage';
 import { EditProfilePage } from './pages/account/EditProfilePage';
+import { AddressesPage } from './pages/account/AddressesPage';
+import { PrescriptionsPage } from './pages/account/PrescriptionsPage';
 
 function App() {
   return (
@@ -45,6 +47,12 @@ function App() {
                 <Route index element={<DashboardPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="profile/edit" element={<EditProfilePage />} />
+                <Route path="addresses" element={<AddressesPage />} />
+              </Route>
+              
+              {/* Prescriptions under AccountLayout too, per Account Integration instructions */}
+              <Route path="prescriptions" element={<ProtectedRoute><AccountLayout /></ProtectedRoute>}>
+                <Route index element={<PrescriptionsPage />} />
               </Route>
 
               <Route path="orders" element={<OrdersPage />} />

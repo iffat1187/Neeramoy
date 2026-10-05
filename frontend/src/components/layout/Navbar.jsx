@@ -94,16 +94,18 @@ export const Navbar = () => {
                   <span className="text-[10px] text-on-surface-variant">Account</span>
                 </div>
               </div>
-              <div className="absolute top-full right-0 mt-2 w-48 bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant/20 hidden group-hover:block overflow-hidden py-1">
-                <Link to="/account" className="w-full text-left px-4 py-2 hover:bg-surface-container text-body-sm text-on-surface flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">dashboard</span> Dashboard
-                </Link>
-                <Link to="/account/profile" className="w-full text-left px-4 py-2 hover:bg-surface-container text-body-sm text-on-surface flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">person</span> Profile
-                </Link>
-                <button onClick={logout} className="w-full text-left px-4 py-2 hover:bg-error-container/20 text-body-sm text-error flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">logout</span> Logout
-                </button>
+              <div className="absolute top-full right-0 pt-2 w-48 hidden group-hover:block z-50">
+                <div className="bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant/20 overflow-hidden py-1">
+                  <Link to="/account" className="w-full text-left px-4 py-2 hover:bg-surface-container text-body-sm text-on-surface flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px]">dashboard</span> Dashboard
+                  </Link>
+                  <Link to="/account/profile" className="w-full text-left px-4 py-2 hover:bg-surface-container text-body-sm text-on-surface flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px]">person</span> Profile
+                  </Link>
+                  <button onClick={() => { navigate('/'); logout(); }} className="w-full text-left px-4 py-2 hover:bg-error-container/20 text-body-sm text-error flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px]">logout</span> Logout
+                  </button>
+                </div>
               </div>
             </div>
           ) : (

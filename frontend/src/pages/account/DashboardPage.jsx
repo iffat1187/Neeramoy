@@ -1,11 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useOrder } from '../../context/OrderContext';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 
 export const DashboardPage = () => {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { orders } = useOrder();
 
@@ -250,7 +251,7 @@ export const DashboardPage = () => {
             <span className="material-symbols-outlined text-primary">call</span>
           </div>
 
-          <button onClick={logout} className="w-full flex items-center gap-space-md p-space-md hover:bg-error-container/10 transition-colors text-left">
+          <button onClick={() => { navigate('/'); logout(); }} className="w-full flex items-center gap-space-md p-space-md hover:bg-error-container/10 transition-colors text-left">
             <div className="w-10 h-10 rounded-full bg-error-container/50 text-error flex items-center justify-center">
               <span className="material-symbols-outlined">logout</span>
             </div>

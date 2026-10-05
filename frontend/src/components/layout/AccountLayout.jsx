@@ -1,9 +1,10 @@
 import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 export const AccountLayout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   
   const navItems = [
@@ -47,7 +48,7 @@ export const AccountLayout = () => {
               );
             })}
             <button
-              onClick={logout}
+              onClick={() => { navigate('/'); logout(); }}
               className="w-full flex items-center gap-space-md px-space-md py-space-md text-error hover:bg-error-container/10 transition-colors text-left"
             >
               <span className="material-symbols-outlined">logout</span>
