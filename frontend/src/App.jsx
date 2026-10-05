@@ -16,6 +16,11 @@ import { AuthProvider } from './context/AuthContext';
 import { OrderProvider } from './context/OrderContext';
 import { OrdersPage } from './pages/OrdersPage';
 import { OrderDetailsPage } from './pages/OrderDetailsPage';
+import { ProtectedRoute } from './components/common/ProtectedRoute';
+import { AccountLayout } from './components/layout/AccountLayout';
+import { DashboardPage } from './pages/account/DashboardPage';
+import { ProfilePage } from './pages/account/ProfilePage';
+import { EditProfilePage } from './pages/account/EditProfilePage';
 
 function App() {
   return (
@@ -34,6 +39,14 @@ function App() {
               <Route path="login" element={<LoginPage />} />
               <Route path="register" element={<RegisterPage />} />
               <Route path="search" element={<SearchResultsPage />} />
+              
+              {/* Account Routes */}
+              <Route path="account" element={<ProtectedRoute><AccountLayout /></ProtectedRoute>}>
+                <Route index element={<DashboardPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="profile/edit" element={<EditProfilePage />} />
+              </Route>
+
               <Route path="orders" element={<OrdersPage />} />
               <Route path="orders/:orderId" element={<OrderDetailsPage />} />
             </Route>
