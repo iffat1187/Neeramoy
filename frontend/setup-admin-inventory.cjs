@@ -1,4 +1,95 @@
-import React, { useState } from 'react';
+const fs = require('fs');
+const path = require('path');
+
+// 1. Rewrite InventoryContext.jsx
+const inventoryContextPath = path.join(__dirname, 'src', 'context', 'InventoryContext.jsx');
+const inventoryContextContent = `import React, { createContext, useContext, useState, useEffect } from 'react';
+import { MOCK_MEDICINES } from '../mockData/medicines';
+
+const InventoryContext = createContext();
+
+export const useInventory = () => useContext(InventoryContext);
+
+export const InventoryProvider = ({ children }) => {
+  const [inventory, setInventory] = useState([]);
+  const [activityHistory, setActivityHistory] = useState([]);
+
+  useEffect(() => {
+    // Initialize inventory from MOCK_MEDICINES
+    const initialInventory = MOCK_MEDICINES.map((med, index) => {
+      const stock = med.inStock ? Math.floor(Math.random() * 50) + 1 : 0;
+      const reorderLevel = Math.floor(Math.random() * 15) + 5;
+      let status = 'In Stock';
+      if (stock === 0) status = 'Out of Stock';
+      else if (stock <= reorderLevel) status = 'Low Stock';
+
+      return {
+        ...med,
+        sku: \`SKU-\${med.name.substring(0,3).toUpperCase()}-\${1000 + index}\`,
+        stock,
+        reorderLevel,
+        status,
+        lastUpdated: new Date().toLocaleDateString('en-GB')
+      };
+    });
+    setInventory(initialInventory);
+
+    // Mock initial activities
+    setActivityHistory([
+      { id: 'a1', medicineName: 'Napa Extra', action: 'Restock', quantity: '+50', reason: 'New shipment', date: new Date().toLocaleString('en-GB') },
+      { id: 'a2', medicineName: 'Maxpro 20', action: 'Adjust', quantity: '-2', reason: 'Damaged stock', date: new Date(Date.now() - 86400000).toLocaleString('en-GB') },
+    ]);
+  }, []);
+
+  const updateStock = (id, newStock, reason, actionType = 'Adjust') => {
+    setInventory(prev => prev.map(med => {
+      if (med.id === id) {
+        let status = 'In Stock';
+        if (newStock === 0) status = 'Out of Stock';
+        else if (newStock <= med.reorderLevel) status = 'Low Stock';
+        
+        const diff = newStock - med.stock;
+        
+        setActivityHistory(acts => [
+          {
+            id: 'act-' + Date.now(),
+            medicineName: med.name,
+            action: actionType,
+            quantity: diff > 0 ? \`+\${diff}\` : diff.toString(),
+            reason: reason,
+            date: new Date().toLocaleString('en-GB')
+          },
+          ...acts
+        ]);
+
+        return {
+          ...med,
+          stock: newStock,
+          status,
+          lastUpdated: new Date().toLocaleDateString('en-GB')
+        };
+      }
+      return med;
+    }));
+  };
+
+  return (
+    <InventoryContext.Provider value={{
+      inventory,
+      activityHistory,
+      updateStock
+    }}>
+      {children}
+    </InventoryContext.Provider>
+  );
+};
+`;
+fs.writeFileSync(inventoryContextPath, inventoryContextContent);
+
+
+// 2. Rewrite AdminInventoryPage.jsx
+const adminInventoryPagePath = path.join(__dirname, 'src', 'pages', 'admin', 'AdminInventoryPage.jsx');
+const adminInventoryPageContent = `import React, { useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
@@ -14,9 +105,8 @@ export const AdminInventoryPage = () => {
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterType, setFilterType] = useState('All');
 
-  const [modalState, setModalState] = useState({ isOpen: false, med: null, type: null }); // type: 'adjust' | 'restock' | 'addStock'
+  const [modalState, setModalState] = useState({ isOpen: false, med: null, type: null }); // type: 'adjust' | 'restock'
   const [adjustData, setAdjustData] = useState({ type: 'add', qty: 0, reason: 'Manual correction' });
-  const [successMsg, setSuccessMsg] = useState('');
 
   // KPIs
   const totalSkus = inventory.length;
@@ -59,7 +149,7 @@ export const AdminInventoryPage = () => {
 
   const openModal = (med, type) => {
     setModalState({ isOpen: true, med, type });
-    setAdjustData({ type: 'add', qty: type === 'restock' && med ? (med.reorderLevel * 2) : 0, reason: (type === 'restock' || type === 'addStock') ? 'New shipment' : 'Manual correction' });
+    setAdjustData({ type: 'add', qty: type === 'restock' ? (med.reorderLevel * 2) : 0, reason: type === 'restock' ? 'New shipment' : 'Manual correction' });
   };
 
   const closeModal = () => {
@@ -69,16 +159,10 @@ export const AdminInventoryPage = () => {
   const handleSaveAdjustment = (e) => {
     e.preventDefault();
     const med = modalState.med;
-    if (!med) return;
     let newStock = med.stock;
     const qty = parseInt(adjustData.qty, 10) || 0;
-    
-    if (qty <= 0 && (modalState.type === 'addStock' || modalState.type === 'restock' || adjustData.type !== 'set')) {
-      alert('Quantity must be greater than 0');
-      return;
-    }
 
-    if (modalState.type === 'restock' || modalState.type === 'addStock') {
+    if (modalState.type === 'restock') {
       newStock += qty;
     } else {
       if (adjustData.type === 'add') newStock += qty;
@@ -86,9 +170,7 @@ export const AdminInventoryPage = () => {
       else if (adjustData.type === 'set') newStock = qty;
     }
 
-    updateStock(med.id, newStock, adjustData.reason, modalState.type === 'restock' ? 'Restock' : (modalState.type === 'addStock' ? 'Add Stock' : 'Adjust'));
-    setSuccessMsg(`${med.name} stock updated from ${med.stock} → ${newStock}.`);
-    setTimeout(() => setSuccessMsg(''), 5000);
+    updateStock(med.id, newStock, adjustData.reason, modalState.type === 'restock' ? 'Restock' : 'Adjust');
     closeModal();
   };
 
@@ -100,7 +182,6 @@ export const AdminInventoryPage = () => {
 
   return (
     <div className="p-space-lg flex flex-col gap-space-lg">
-      {successMsg && <div className="bg-primary-container text-on-primary-container p-3 rounded-lg font-bold mb-2">{successMsg}</div>}
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
         <div className="flex flex-col gap-1">
@@ -118,7 +199,7 @@ export const AdminInventoryPage = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <button onClick={() => openModal(null, 'addStock')} className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md font-bold hover:bg-primary/90 transition-colors shrink-0">
+          <button className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md font-bold hover:bg-primary/90 transition-colors shrink-0">
             <span className="material-symbols-outlined text-[20px]">inventory_2</span>
             Add Stock
           </button>
@@ -339,7 +420,7 @@ export const AdminInventoryPage = () => {
                   <td className="py-3 text-[11px] text-on-surface-variant">{act.date}</td>
                   <td className="py-3"><Badge variant="surface" className="text-[10px]">{act.action}</Badge></td>
                   <td className="py-3 font-medium">{act.medicineName}</td>
-                  <td className={`py-3 font-bold ${act.quantity.startsWith('-') ? 'text-error' : 'text-primary'}`}>{act.quantity}</td>
+                  <td className={\`py-3 font-bold \${act.quantity.startsWith('-') ? 'text-error' : 'text-primary'}\`}>{act.quantity}</td>
                   <td className="py-3 text-on-surface-variant">{act.reason}</td>
                 </tr>
               ))}
@@ -349,36 +430,16 @@ export const AdminInventoryPage = () => {
       </Card>
 
       {/* Adjust/Restock Modal */}
-      {modalState.isOpen && (modalState.med || modalState.type === 'addStock') && (
+      {modalState.isOpen && modalState.med && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-scrim/50 backdrop-blur-sm">
           <div className="bg-surface rounded-xl shadow-lg border border-outline-variant/30 w-full max-w-md overflow-hidden flex flex-col">
             <div className="p-space-md border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low">
-              <h2 className="font-headline-sm font-bold text-on-surface">{modalState.type === 'addStock' ? 'Add Stock' : (modalState.type === 'restock' ? 'Restock Medicine' : 'Adjust Stock')}</h2>
+              <h2 className="font-headline-sm font-bold text-on-surface">{modalState.type === 'restock' ? 'Restock Medicine' : 'Adjust Stock'}</h2>
               <button onClick={closeModal} className="p-1 rounded-full hover:bg-surface-container-high text-on-surface-variant">
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
             <div className="p-space-md">
-              {modalState.type === 'addStock' && (
-                <div className="flex flex-col gap-1 mb-4">
-                  <label className="font-label-sm font-bold text-on-surface">Select Medicine</label>
-                  <select 
-                    className="bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:border-primary"
-                    value={modalState.med ? modalState.med.id : ''}
-                    onChange={(e) => {
-                      const selected = inventory.find(m => m.id === e.target.value);
-                      setModalState({...modalState, med: selected});
-                    }}
-                    required
-                  >
-                    <option value="" disabled>Select a medicine...</option>
-                    {inventory.map(m => (
-                      <option key={m.id} value={m.id}>{m.name} (SKU: {m.sku})</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              {modalState.med && (
               <div className="flex items-center gap-3 mb-6 bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/20">
                 <div className="w-12 h-12 rounded-md bg-surface-container-highest/20 p-1">
                   <img src={modalState.med.image} alt={modalState.med.name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
@@ -386,17 +447,8 @@ export const AdminInventoryPage = () => {
                 <div className="flex flex-col">
                   <span className="font-bold text-on-surface text-label-md">{modalState.med.name}</span>
                   <span className="text-[11px] text-on-surface-variant">Current Stock: <strong className="text-on-surface">{modalState.med.stock}</strong> | Reorder: {modalState.med.reorderLevel}</span>
-                  <span className="text-[11px] text-primary font-bold mt-1">
-                    Updated Stock Preview: {
-                      modalState.type === 'restock' || modalState.type === 'addStock' ? modalState.med.stock + (parseInt(adjustData.qty)||0) : 
-                      (adjustData.type === 'add' ? modalState.med.stock + (parseInt(adjustData.qty)||0) : 
-                       adjustData.type === 'remove' ? Math.max(0, modalState.med.stock - (parseInt(adjustData.qty)||0)) : 
-                       (parseInt(adjustData.qty)||0))
-                    }
-                  </span>
                 </div>
               </div>
-              )}
               
               <form id="adjustForm" onSubmit={handleSaveAdjustment} className="flex flex-col gap-4">
                 {modalState.type === 'adjust' && (
@@ -415,7 +467,7 @@ export const AdminInventoryPage = () => {
                 )}
                 
                 <div className="flex flex-col gap-1">
-                  <label className="font-label-sm font-bold text-on-surface">{(modalState.type === 'restock' || modalState.type === 'addStock') ? 'Quantity to Add' : 'Quantity'}</label>
+                  <label className="font-label-sm font-bold text-on-surface">{modalState.type === 'restock' ? 'Quantity to Add' : 'Quantity'}</label>
                   <input 
                     type="number" min="0" required 
                     className="bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:border-primary"
@@ -442,7 +494,7 @@ export const AdminInventoryPage = () => {
             </div>
             <div className="p-space-md border-t border-outline-variant/30 flex justify-end gap-3 bg-surface-container-low mt-auto">
               <button onClick={closeModal} className="px-4 py-2 rounded-lg font-label-md font-bold text-on-surface hover:bg-surface-container-high transition-colors">Cancel</button>
-              <button form="adjustForm" type="submit" className="px-4 py-2 rounded-lg font-label-md font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors">Confirm {modalState.type === 'addStock' ? 'Add Stock' : (modalState.type === 'restock' ? 'Restock' : 'Adjustment')}</button>
+              <button form="adjustForm" type="submit" className="px-4 py-2 rounded-lg font-label-md font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors">Confirm {modalState.type === 'restock' ? 'Restock' : 'Adjustment'}</button>
             </div>
           </div>
         </div>
@@ -450,3 +502,5 @@ export const AdminInventoryPage = () => {
     </div>
   );
 };
+`;
+fs.writeFileSync(adminInventoryPagePath, adminInventoryPageContent);
