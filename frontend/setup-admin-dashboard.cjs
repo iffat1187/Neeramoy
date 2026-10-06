@@ -1,4 +1,153 @@
-import React, { useMemo } from 'react';
+const fs = require('fs');
+const path = require('path');
+
+const srcDir = path.join(__dirname, 'src');
+const servicesDir = path.join(srcDir, 'services');
+
+if (!fs.existsSync(servicesDir)) {
+  fs.mkdirSync(servicesDir, { recursive: true });
+}
+
+// 1. Write dashboardService.js
+const dashboardServicePath = path.join(servicesDir, 'dashboardService.js');
+const dashboardServiceContent = `/**
+ * Dashboard Service
+ * 
+ * In a real backend environment, this service would export a single method like:
+ * export const fetchDashboardData = async () => apiClient.get('/api/admin/dashboard');
+ * 
+ * For now, this acts as the aggregation layer for the frontend mock state to 
+ * ensure the UI components don't know the difference between mock and real data.
+ */
+
+export const buildDashboardData = (orders, inventory, prescriptions, customers) => {
+  // KPIs
+  const today = new Date().toDateString();
+  const todayOrdersList = orders.filter(o => new Date(o.createdAt).toDateString() === today);
+  const todayRevenue = todayOrdersList.reduce((sum, o) => sum + (o.total || 0), 0);
+  const todayOrders = todayOrdersList.length;
+  
+  const pendingOrdersCount = orders.filter(o => o.status === 'Pending').length;
+  const pendingPrescriptionsCount = prescriptions.filter(p => p.status === 'Pending').length;
+  const lowStockItems = inventory.filter(i => i.stock <= i.reorderLevel && i.stock > 0);
+  const outOfStockItems = inventory.filter(i => i.stock === 0);
+  const lowStockCount = lowStockItems.length + outOfStockItems.length;
+  const totalCustomers = customers.length;
+
+  // Order Status Chart
+  const statusCounts = orders.reduce((acc, o) => {
+    acc[o.status] = (acc[o.status] || 0) + 1;
+    return acc;
+  }, {});
+  
+  const orderStatus = Object.keys(statusCounts).map(status => ({ name: status, value: statusCounts[status] }));
+
+  // Revenue Overview (Last 7 Days)
+  const revenueMap = {};
+  for(let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    revenueMap[d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })] = 0;
+  }
+  orders.forEach(o => {
+    const dateStr = new Date(o.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    if (revenueMap[dateStr] !== undefined && o.status !== 'Cancelled') {
+      revenueMap[dateStr] += o.total;
+    }
+  });
+  const revenueOverview = Object.keys(revenueMap).map(k => ({ date: k, revenue: revenueMap[k] }));
+
+  // Orders Overview (Last 7 Days)
+  const ordersOverviewMap = {};
+  for(let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    ordersOverviewMap[d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })] = 0;
+  }
+  orders.forEach(o => {
+    const dateStr = new Date(o.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    if (ordersOverviewMap[dateStr] !== undefined) {
+      ordersOverviewMap[dateStr] += 1;
+    }
+  });
+  const ordersOverview = Object.keys(ordersOverviewMap).map(k => ({ date: k, orders: ordersOverviewMap[k] }));
+
+  // Category Distribution
+  const catMap = inventory.reduce((acc, m) => {
+    acc[m.category] = (acc[m.category] || 0) + 1;
+    return acc;
+  }, {});
+  const categoryDistribution = Object.keys(catMap).map(c => ({ name: c.charAt(0).toUpperCase() + c.slice(1), value: catMap[c] }));
+
+  // Top Selling Medicines (from orders)
+  const itemMap = {};
+  orders.forEach(o => {
+    if (o.status !== 'Cancelled') {
+      o.items.forEach(item => {
+        if (!itemMap[item.id]) {
+          itemMap[item.id] = { id: item.id, name: item.name, quantity: 0, revenue: 0 };
+        }
+        itemMap[item.id].quantity += item.quantity;
+        itemMap[item.id].revenue += (item.quantity * item.price);
+      });
+    }
+  });
+  
+  const topSellingMedicines = Object.values(itemMap)
+    .sort((a, b) => b.quantity - a.quantity)
+    .slice(0, 5)
+    .map(t => {
+      const med = inventory.find(i => i.id === t.id);
+      return { ...t, image: med?.image || 'https://via.placeholder.com/150', category: med?.category || 'Unknown' };
+    });
+
+  return {
+    kpis: {
+      todayRevenue,
+      todayOrders,
+      pendingOrders: pendingOrdersCount,
+      pendingPrescriptions: pendingPrescriptionsCount,
+      lowStock: lowStockCount,
+      totalCustomers
+    },
+    revenueOverview,
+    ordersOverview,
+    orderStatus,
+    inventoryStatus: [
+      { name: 'In Stock', value: inventory.length - lowStockCount },
+      { name: 'Low Stock', value: lowStockItems.length },
+      { name: 'Out of Stock', value: outOfStockItems.length }
+    ],
+    categoryDistribution,
+    topSellingMedicines,
+    recentOrders: [...orders].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5),
+    needsAttention: {
+      pendingOrders: orders.filter(o => o.status === 'Pending').slice(0,3),
+      lowStockItems: [...lowStockItems, ...outOfStockItems].sort((a,b) => a.stock - b.stock).slice(0,3),
+      pendingPrescriptions: prescriptions.filter(p => p.status === 'Pending').slice(0,3)
+    },
+    customerOverview: {
+      total: customers.length,
+      new: customers.filter(c => {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        return new Date(c.registrationDate) >= thirtyDaysAgo;
+      }).length,
+      withOrders: customers.filter(c => c.orders && c.orders.length > 0).length
+    },
+    prescriptionOverview: {
+      pending: pendingPrescriptionsCount,
+      approved: prescriptions.filter(p => p.status === 'Approved').length,
+      rejected: prescriptions.filter(p => p.status === 'Rejected').length
+    }
+  };
+};
+`;
+fs.writeFileSync(dashboardServicePath, dashboardServiceContent);
+
+// 2. Write AdminDashboardPage.jsx
+const dashboardPagePath = path.join(srcDir, 'pages', 'admin', 'AdminDashboardPage.jsx');
+const dashboardPageContent = `import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
@@ -91,7 +240,7 @@ export const AdminDashboardPage = () => {
               <LineChart data={data.revenueOverview} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-outline-variant)" opacity={0.3} />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 11 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 11 }} tickFormatter={(val) => `৳${val}`} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 11 }} tickFormatter={(val) => \`৳\${val}\`} />
                 <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface-container-highest)', borderColor: 'var(--color-outline-variant)', borderRadius: '8px', color: 'var(--color-on-surface)' }} />
                 <Line type="monotone" dataKey="revenue" stroke={isDarkMode ? '#7AD7BE' : '#00675c'} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Revenue" />
               </LineChart>
@@ -122,7 +271,7 @@ export const AdminDashboardPage = () => {
                 <PieChart>
                   <Pie data={data.orderStatus} cx="50%" cy="50%" innerRadius={30} outerRadius={45} paddingAngle={2} dataKey="value">
                     {data.orderStatus.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={\`cell-\${index}\`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface-container)', border: '1px solid var(--color-outline-variant)', borderRadius: '4px', fontSize: '11px' }} />
@@ -162,7 +311,7 @@ export const AdminDashboardPage = () => {
                   <span>{cat.value}</span>
                 </div>
                 <div className="w-full bg-surface-container-highest rounded-full h-1.5">
-                  <div className="h-1.5 rounded-full" style={{ width: `${Math.min(100, (cat.value / inventory.length) * 100)}%`, backgroundColor: COLORS[idx % COLORS.length] }}></div>
+                  <div className="h-1.5 rounded-full" style={{ width: \`\${Math.min(100, (cat.value / inventory.length) * 100)}%\`, backgroundColor: COLORS[idx % COLORS.length] }}></div>
                 </div>
               </div>
             ))}
@@ -264,7 +413,7 @@ export const AdminDashboardPage = () => {
                     <td className="p-3 font-price-sm text-primary font-bold">৳{o.total?.toLocaleString()}</td>
                     <td className="p-3">{getStatusBadge(o.status)}</td>
                     <td className="p-3 text-right">
-                      <Link to={`/admin/orders/${o.id}`} className="text-on-surface-variant hover:text-primary transition-colors inline-block">
+                      <Link to={\`/admin/orders/\${o.id}\`} className="text-on-surface-variant hover:text-primary transition-colors inline-block">
                         <span className="material-symbols-outlined text-[18px]">visibility</span>
                       </Link>
                     </td>
@@ -287,7 +436,7 @@ export const AdminDashboardPage = () => {
             {data.needsAttention.pendingOrders.length > 0 ? data.needsAttention.pendingOrders.map(o => (
               <div key={o.id} className="flex justify-between items-center text-body-sm bg-surface p-2 rounded border border-outline-variant/20">
                 <span>{o.id}</span>
-                <Link to={`/admin/orders/${o.id}`} className="text-primary hover:underline text-[11px] font-bold">Review</Link>
+                <Link to={\`/admin/orders/\${o.id}\`} className="text-primary hover:underline text-[11px] font-bold">Review</Link>
               </div>
             )) : <span className="text-[12px] text-on-surface-variant italic">All caught up</span>}
           </div>
@@ -297,7 +446,7 @@ export const AdminDashboardPage = () => {
             {data.needsAttention.lowStockItems.length > 0 ? data.needsAttention.lowStockItems.map(m => (
               <div key={m.id} className="flex justify-between items-center text-body-sm bg-surface p-2 rounded border border-outline-variant/20">
                 <span className="truncate max-w-[150px]">{m.name}</span>
-                <span className={`font-bold ${m.stock === 0 ? 'text-error' : 'text-warning-dark'}`}>{m.stock} left</span>
+                <span className={\`font-bold \${m.stock === 0 ? 'text-error' : 'text-warning-dark'}\`}>{m.stock} left</span>
               </div>
             )) : <span className="text-[12px] text-on-surface-variant italic">Inventory healthy</span>}
           </div>
@@ -316,3 +465,5 @@ export const AdminDashboardPage = () => {
     </div>
   );
 };
+`;
+fs.writeFileSync(dashboardPagePath, dashboardPageContent);
