@@ -30,6 +30,7 @@ import { ThemeProvider } from './context/ThemeContext';
 
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
+import { AdminOrderDetailsPage } from './pages/admin/AdminOrderDetailsPage';
 import { AdminPrescriptionsPage } from './pages/admin/AdminPrescriptionsPage';
 import { AdminInventoryPage } from './pages/admin/AdminInventoryPage';
 import { AdminMedicinesPage } from './pages/admin/AdminMedicinesPage';
@@ -78,6 +79,7 @@ function App() {
               <Route index element={<AdminDashboardPage />} />
               <Route path="prescriptions" element={<AdminPrescriptionsPage />} />
               <Route path="orders" element={<AdminOrdersPage />} />
+              <Route path="orders/:orderId" element={<AdminOrderDetailsPage />} />
               <Route path="inventory" element={<AdminInventoryPage />} />
               <Route path="medicines" element={<AdminMedicinesPage />} />
               <Route path="customers" element={<AdminCustomersPage />} />
