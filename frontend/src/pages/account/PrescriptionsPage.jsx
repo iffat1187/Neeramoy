@@ -2,27 +2,10 @@ import React, { useState, useRef } from 'react';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
 
+import { usePrescription } from '../../context/PrescriptionContext';
+
 export const PrescriptionsPage = () => {
-  const [prescriptions, setPrescriptions] = useState([
-    {
-      id: 'rx-1',
-      title: 'Dr. Rahman - Monas 10mg',
-      uploadDate: '10 Oct 2024',
-      status: 'Approved',
-      fileName: 'prescription_rahman.pdf',
-      type: 'pdf',
-      preview: null
-    },
-    {
-      id: 'rx-2',
-      title: 'Dr. Siddique - Insulin',
-      uploadDate: '05 Oct 2024',
-      status: 'Pending',
-      fileName: 'insulin_slip.jpg',
-      type: 'image',
-      preview: 'https://via.placeholder.com/150'
-    }
-  ]);
+  const { prescriptions, addPrescription, deletePrescription } = usePrescription();
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadError, setUploadError] = useState('');
@@ -68,10 +51,12 @@ export const PrescriptionsPage = () => {
       status: 'Pending',
       fileName: selectedFile.file.name,
       type: selectedFile.type,
-      preview: selectedFile.preview
+      preview: selectedFile.preview,
+      customerName: 'Tanvir Hasan',
+      phone: '+880 1712-345678'
     };
 
-    setPrescriptions([newRx, ...prescriptions]);
+    addPrescription(newRx);
     setSelectedFile(null);
     setIsUploading(false);
     
@@ -83,7 +68,7 @@ export const PrescriptionsPage = () => {
 
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this prescription?')) {
-      setPrescriptions(prescriptions.filter(rx => rx.id !== id));
+      deletePrescription(id);
     }
   };
 

@@ -11,27 +11,37 @@ export const AuthProvider = ({ children }) => {
   const login = (email, password) => {
     // Mock login logic
     if (email && password) {
-      setUser({
-        name: 'Hasan Mahmud',
-        email: email,
-        phone: '01711223344',
-        addresses: [
-          {
-            id: '1',
-            name: 'Hasan Mahmud',
-            phone: '01711223344',
-            address: 'House 42, Road 7/A',
-            city: 'Dhaka',
-            area: 'Dhanmondi',
-            postalCode: '1209',
-            isDefault: true
-          }
-        ],
-        address: 'House 42, Road 7/A',
-        city: 'Dhaka',
-        area: 'Dhanmondi',
-        postalCode: '1209'
-      });
+      if (email === 'admin@neeramoy.com') {
+        setUser({
+          name: 'Neeramoy Admin',
+          email: email,
+          phone: '01911223344',
+          role: 'ADMIN'
+        });
+      } else {
+        setUser({
+          name: 'Hasan Mahmud',
+          email: email,
+          phone: '01711223344',
+          role: 'CUSTOMER',
+          addresses: [
+            {
+              id: '1',
+              name: 'Hasan Mahmud',
+              phone: '01711223344',
+              address: 'House 42, Road 7/A',
+              city: 'Dhaka',
+              area: 'Dhanmondi',
+              postalCode: '1209',
+              isDefault: true
+            }
+          ],
+          address: 'House 42, Road 7/A',
+          city: 'Dhaka',
+          area: 'Dhanmondi',
+          postalCode: '1209'
+        });
+      }
       return true;
     }
     return false;

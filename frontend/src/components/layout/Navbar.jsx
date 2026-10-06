@@ -2,11 +2,13 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export const Navbar = () => {
   const navigate = useNavigate();
   const { cartCount, cartTotal } = useCart();
   const { user, isLoggedIn, logout } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
   
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
@@ -82,6 +84,17 @@ export const Navbar = () => {
               <span className="font-price-md text-price-md text-primary font-bold">৳ {cartTotal}</span>
             </div>
           </Link>
+
+          <button 
+            onClick={toggleTheme} 
+            className="flex items-center justify-center w-10 h-10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 bg-surface-container hover:bg-surface-container-high text-on-surface"
+            aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+            title={isDarkMode ? "Light mode" : "Dark mode"}
+          >
+            <span className="material-symbols-outlined text-[20px]">
+              {isDarkMode ? 'light_mode' : 'dark_mode'}
+            </span>
+          </button>
 
           {isLoggedIn ? (
             <div className="hidden lg:flex items-center gap-3 pl-space-xs cursor-pointer group relative">

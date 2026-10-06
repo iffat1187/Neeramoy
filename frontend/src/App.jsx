@@ -24,9 +24,24 @@ import { EditProfilePage } from './pages/account/EditProfilePage';
 import { AddressesPage } from './pages/account/AddressesPage';
 import { PrescriptionsPage } from './pages/account/PrescriptionsPage';
 
+import { PrescriptionProvider } from './context/PrescriptionContext';
+import { InventoryProvider } from './context/InventoryContext';
+import { ThemeProvider } from './context/ThemeContext';
+
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
+import { AdminPrescriptionsPage } from './pages/admin/AdminPrescriptionsPage';
+import { AdminInventoryPage } from './pages/admin/AdminInventoryPage';
+import { AdminMedicinesPage } from './pages/admin/AdminMedicinesPage';
+import { AdminCustomersPage } from './pages/admin/AdminCustomersPage';
+import { AdminProfilePage } from './pages/admin/AdminProfilePage';
+
 function App() {
   return (
+    <ThemeProvider>
     <AuthProvider>
+      <PrescriptionProvider>
+      <InventoryProvider>
       <OrderProvider>
       <CartProvider>
         <BrowserRouter>
@@ -59,17 +74,23 @@ function App() {
               <Route path="orders/:orderId" element={<OrderDetailsPage />} />
             </Route>
 
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<PlaceholderPage title="Admin Dashboard" />} />
-              <Route path="prescriptions" element={<PlaceholderPage title="Prescription Review" />} />
-              <Route path="orders" element={<PlaceholderPage title="Order Management" />} />
-              <Route path="inventory" element={<PlaceholderPage title="Inventory Management" />} />
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminLayout /></ProtectedRoute>}>
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="prescriptions" element={<AdminPrescriptionsPage />} />
+              <Route path="orders" element={<AdminOrdersPage />} />
+              <Route path="inventory" element={<AdminInventoryPage />} />
+              <Route path="medicines" element={<AdminMedicinesPage />} />
+              <Route path="customers" element={<AdminCustomersPage />} />
+              <Route path="profile" element={<AdminProfilePage />} />
             </Route>
           </Routes>
         </BrowserRouter>
       </CartProvider>
       </OrderProvider>
+      </InventoryProvider>
+      </PrescriptionProvider>
     </AuthProvider>
+    </ThemeProvider>
   );
 }
 

@@ -321,7 +321,7 @@ export const CheckoutPage = () => {
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex items-start gap-3">
                     <div className="w-12 h-12 rounded bg-surface-container-low border border-outline-variant/20 p-1 shrink-0">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply" />
+                      <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-label-md font-bold text-on-surface truncate">{item.name}</h4>

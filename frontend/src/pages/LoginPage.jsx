@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 export const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isLoggedIn } = useAuth();
+  const { login, isLoggedIn, user } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,10 +17,14 @@ export const LoginPage = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (isLoggedIn) {
-      navigate(from, { replace: true });
+    if (isLoggedIn && user) {
+      if (user.role === 'ADMIN') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
     }
-  }, [isLoggedIn, navigate, from]);
+  }, [isLoggedIn, user, navigate, from]);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -30,9 +34,7 @@ export const LoginPage = () => {
     }
     
     // Mock Auth logic
-    if (login(email, password)) {
-      navigate(from, { replace: true });
-    } else {
+    if (!login(email, password)) {
       setError('Invalid email or password.');
     }
   };

@@ -131,15 +131,15 @@ export const ProductDetailsPage = () => {
                     {product.discount}% OFF
                   </div>
                 )}
-                <img src={product.image} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" />
+                <img src={product.image} alt={product.name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
               </div>
               <div className="flex items-center gap-space-sm w-full max-w-sm">
                 <div className="w-16 h-16 rounded-lg border-2 border-primary bg-surface-container-lowest p-1 cursor-pointer">
-                  <img src={product.image} className="w-full h-full object-cover mix-blend-multiply" />
+                  <img src={product.image} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal" />
                 </div>
                 {/* Mock thumbnails */}
                 <div className="w-16 h-16 rounded-lg border border-outline-variant/30 bg-surface-container-low p-1 cursor-pointer opacity-70 hover:opacity-100">
-                  <img src={product.image} className="w-full h-full object-cover mix-blend-multiply" />
+                  <img src={product.image} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal" />
                 </div>
               </div>
             </div>

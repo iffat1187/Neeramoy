@@ -105,7 +105,7 @@ export const OrdersPage = () => {
                   <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
                     {order.items.slice(0, 4).map((item, idx) => (
                       <div key={idx} className="w-14 h-14 rounded-lg bg-surface-container-low border border-outline-variant/30 p-1 shrink-0 relative group">
-                        <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply" />
+                        <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
                         {item.quantity > 1 && (
                           <span className="absolute -top-1 -right-1 bg-surface-variant text-on-surface-variant text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
                             {item.quantity}

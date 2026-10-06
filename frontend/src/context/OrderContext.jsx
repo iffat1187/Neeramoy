@@ -21,7 +21,11 @@ export const OrderProvider = ({ children }) => {
   };
 
   const getOrder = (orderId) => {
-    return orders.find(o => o.orderId === orderId);
+    return orders.find(o => o.id === orderId || o.orderId === orderId);
+  };
+
+  const updateOrderStatus = (orderId, newStatus) => {
+    setOrders(prev => prev.map(o => (o.id === orderId || o.orderId === orderId) ? { ...o, status: newStatus } : o));
   };
   
   // Clear orders when user logs out
@@ -32,7 +36,8 @@ export const OrderProvider = ({ children }) => {
     <OrderContext.Provider value={{
       orders: userOrders,
       addOrder,
-      getOrder
+      getOrder,
+      updateOrderStatus
     }}>
       {children}
     </OrderContext.Provider>

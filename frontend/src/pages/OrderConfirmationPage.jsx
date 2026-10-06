@@ -107,7 +107,7 @@ export const OrderConfirmationPage = () => {
                     <div key={item.id} className="py-space-md first:pt-0 last:pb-0 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-space-md min-w-0">
                         <div className="w-16 h-16 bg-surface-container-low rounded-lg p-1 shrink-0">
-                          <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply" />
+                          <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
                         </div>
                         <div className="min-w-0">
                           <h4 className="font-label-md font-bold text-on-surface truncate">{item.name}</h4>

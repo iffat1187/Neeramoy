@@ -84,7 +84,7 @@ export const CartPage = () => {
                     {/* Details */}
                     <div className="col-span-6 flex gap-space-md w-full">
                       <div className="w-20 h-20 bg-surface-container-low rounded-xl border border-outline-variant/20 flex items-center justify-center p-1 shrink-0 cursor-pointer" onClick={() => navigate(`/product/${item.id}`)}>
-                        <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply" />
+                        <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
                       </div>
                       <div className="flex flex-col justify-center flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">

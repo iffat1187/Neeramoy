@@ -205,7 +205,7 @@ export const SearchResultsPage = () => {
                     <input type="radio" name="rx_filter" checked={filters.type === 'otc'} onChange={() => setFilters({...filters, type: 'otc'})} className="w-4 h-4 text-primary accent-primary" />
                     <span>OTC (প্রেসক্রিপশন ছাড়াই)</span>
                   </span>
-                  <span className="text-[11px] bg-secondary-container text-on-secondary-container px-1.5 py-0.5 rounded font-bold">OTC</span>
+                  <span className="text-[11px] bg-secondary-container text-on-secondary-container dark:bg-secondary/15 dark:text-secondary px-1.5 py-0.5 rounded font-bold">OTC</span>
                 </label>
                 <label className="flex items-center justify-between cursor-pointer text-body-sm text-on-surface">
                   <span className="flex items-center gap-space-xs">
