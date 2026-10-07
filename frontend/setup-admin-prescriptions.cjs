@@ -1,4 +1,82 @@
-import React, { useState } from 'react';
+const fs = require('fs');
+const path = require('path');
+
+// 1. Update PrescriptionContext.jsx
+const pContextPath = path.join(__dirname, 'src', 'context', 'PrescriptionContext.jsx');
+let pContextContent = fs.readFileSync(pContextPath, 'utf8');
+
+// Update mock prescriptions to be more realistic
+const newMockData = `[
+    {
+      id: 'RX-8842',
+      title: 'Dr. Rahman - Monas 10mg',
+      uploadDate: new Date(Date.now() - 172800000).toISOString(),
+      status: 'Approved',
+      fileName: 'prescription_rahman.pdf',
+      type: 'pdf',
+      preview: 'https://via.placeholder.com/400x500.png?text=PDF+Document',
+      customerName: 'Tanvir Hasan',
+      phone: '01712345678',
+      reviewedBy: 'Admin',
+      reviewedDate: new Date(Date.now() - 86400000).toISOString()
+    },
+    {
+      id: 'RX-8843',
+      title: 'Dr. Siddique - Insulin',
+      uploadDate: new Date(Date.now() - 3600000).toISOString(),
+      status: 'Pending',
+      fileName: 'insulin_slip.jpg',
+      type: 'image',
+      preview: 'https://via.placeholder.com/400x500.png?text=Prescription+Image',
+      customerName: 'Tanvir Hasan',
+      phone: '01712345678'
+    },
+    {
+      id: 'RX-8844',
+      title: 'General checkup - Napa',
+      uploadDate: new Date(Date.now() - 7200000).toISOString(),
+      status: 'Pending',
+      fileName: 'handwritten.jpg',
+      type: 'image',
+      preview: 'https://via.placeholder.com/400x500.png?text=Handwritten+RX',
+      customerName: 'Sadia Islam',
+      phone: '01922334455'
+    },
+    {
+      id: 'RX-8845',
+      title: 'Dr. Ahmed - Inhaler',
+      uploadDate: new Date(Date.now() - 259200000).toISOString(),
+      status: 'Rejected',
+      reason: 'Image unclear',
+      fileName: 'blur_cam.jpg',
+      type: 'image',
+      preview: 'https://via.placeholder.com/400x500.png?text=Blurry+Image',
+      customerName: 'Kamrul Hasan',
+      phone: '01833445566',
+      reviewedBy: 'Admin',
+      reviewedDate: new Date(Date.now() - 172800000).toISOString()
+    }
+  ]`;
+
+// We just replace the useState array initialization
+pContextContent = pContextContent.replace(
+  /const \[prescriptions, setPrescriptions\] = useState\(\[[\s\S]*?\]\);/,
+  `const [prescriptions, setPrescriptions] = useState(${newMockData});`
+);
+
+// Update updatePrescriptionStatus to take more fields
+pContextContent = pContextContent.replace(
+  /const updatePrescriptionStatus = \(id, status, reason = ''\) => {[\s\S]*?};/,
+  `const updatePrescriptionStatus = (id, status, reason = '') => {
+    setPrescriptions(prev => prev.map(rx => rx.id === id ? { ...rx, status, reason, reviewedDate: new Date().toISOString(), reviewedBy: 'Admin' } : rx));
+  };`
+);
+
+fs.writeFileSync(pContextPath, pContextContent);
+
+// 2. Rewrite AdminPrescriptionsPage.jsx
+const adminRxPath = path.join(__dirname, 'src', 'pages', 'admin', 'AdminPrescriptionsPage.jsx');
+const adminRxContent = `import React, { useState } from 'react';
 import { usePrescription } from '../../context/PrescriptionContext';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
@@ -24,7 +102,7 @@ export const AdminPrescriptionsPage = () => {
 
   const handleApprove = () => {
     updatePrescriptionStatus(selectedRx.id, 'Approved');
-    setSuccessMsg(`Prescription ${selectedRx.id} approved successfully.`);
+    setSuccessMsg(\`Prescription \${selectedRx.id} approved successfully.\`);
     setSelectedRx(null);
     setTimeout(() => setSuccessMsg(''), 4000);
   };
@@ -36,7 +114,7 @@ export const AdminPrescriptionsPage = () => {
       return;
     }
     updatePrescriptionStatus(selectedRx.id, 'Rejected', reasonToUse);
-    setSuccessMsg(`Prescription ${selectedRx.id} rejected.`);
+    setSuccessMsg(\`Prescription \${selectedRx.id} rejected.\`);
     setSelectedRx(null);
     setShowRejectForm(false);
     setRejectReason('');
@@ -83,7 +161,7 @@ export const AdminPrescriptionsPage = () => {
           <button 
             key={s}
             onClick={() => setFilterStatus(s)}
-            className={`px-4 py-2 rounded-full text-label-sm font-bold whitespace-nowrap transition-colors ${filterStatus === s ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface'}`}
+            className={\`px-4 py-2 rounded-full text-label-sm font-bold whitespace-nowrap transition-colors \${filterStatus === s ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface'}\`}
           >
             {s} <span className="opacity-80 ml-1">{s === 'All' ? prescriptions.length : prescriptions.filter(p => p.status === s).length}</span>
           </button>
@@ -143,7 +221,7 @@ export const AdminPrescriptionsPage = () => {
                 <td className="p-4 text-right">
                   <button 
                     onClick={() => openReview(rx)}
-                    className={`px-4 py-2 rounded-lg text-label-sm font-bold transition-colors ${rx.status === 'Pending' ? 'bg-primary text-on-primary hover:opacity-90' : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest'}`}
+                    className={\`px-4 py-2 rounded-lg text-label-sm font-bold transition-colors \${rx.status === 'Pending' ? 'bg-primary text-on-primary hover:opacity-90' : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest'}\`}
                   >
                     {rx.status === 'Pending' ? 'Review' : 'View Details'}
                   </button>
@@ -305,3 +383,5 @@ export const AdminPrescriptionsPage = () => {
     </div>
   );
 };
+`;
+fs.writeFileSync(adminRxPath, adminRxContent);
