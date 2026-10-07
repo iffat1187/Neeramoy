@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -75,10 +76,10 @@ const Footer = () => {
           <div className="flex flex-col sm:flex-row items-center justify-between pt-space-md gap-space-sm font-label-sm text-label-sm">
             <p>© 2024 Neeramoy Healthcare Bangladesh Ltd. All Rights Reserved.</p>
             <div className="flex items-center gap-space-md text-on-surface-variant">
-              <a className="hover:text-primary transition-colors" href="#">Privacy Policy</a>
-              <a className="hover:text-primary transition-colors" href="#">Terms of Service</a>
-              <a className="hover:text-primary transition-colors" href="#">Prescription Policy</a>
-              <a className="hover:text-primary transition-colors" href="#">DGDA Compliance</a>
+              <Link className="hover:text-primary transition-colors" to="/">Privacy Policy</Link>
+              <Link className="hover:text-primary transition-colors" to="/">Terms of Service</Link>
+              <Link className="hover:text-primary transition-colors" to="/">Prescription Policy</Link>
+              <Link className="hover:text-primary transition-colors" to="/">DGDA Compliance</Link>
             </div>
           </div>
         </div>

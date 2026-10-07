@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+const fs = require('fs');
+const path = require('path');
+
+const navbarContent = `import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 
@@ -9,15 +12,15 @@ const categories = [
   { name: "Prescription", path: "/prescriptions", icon: "upload_file" },
   { name: "Healthcare", path: "/category/healthcare" },
   { name: "Beauty", path: "/category/beauty" },
-  { name: "Baby & Mom Care", path: "/category/baby-mom-care" },
+  { name: "Baby & Mom", path: "/category/baby-mom" },
   { name: "Herbal", path: "/category/herbal" },
   { name: "Home Care", path: "/category/home-care" },
   { name: "Supplement", path: "/category/supplement" },
-  { name: "Food and Nutrition", path: "/category/food-and-nutrition" },
+  { name: "Food & Nutrition", path: "/category/food-nutrition" },
   { name: "Pet Care", path: "/category/pet-care" },
   { name: "Veterinary", path: "/category/veterinary" },
   { name: "Homeopathy", path: "/category/homeopathy" },
-  { name: "Browse by Health Concern", path: "/category/browse-by-health-concern" }
+  { name: "Health Concerns", path: "/health-concerns" }
 ];
 
 const Navbar = () => {
@@ -31,7 +34,7 @@ const Navbar = () => {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(\`/search?q=\${encodeURIComponent(searchQuery.trim())}\`);
     } else {
       navigate('/search');
     }
@@ -125,10 +128,10 @@ const Navbar = () => {
         <div className="max-w-7xl mx-auto px-margin-desktop">
           <nav className="flex items-center justify-start overflow-x-auto py-space-xs gap-space-sm text-label-md font-label-md">
             {categories.map((category, index) => (
-              <NavLink key={index} to={category.path} className={({ isActive }) => `flex items-center gap-1.5 px-space-sm py-1.5 rounded-lg whitespace-nowrap transition-colors ${isActive ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}>
+              <Link key={index} to={category.path} className="flex items-center gap-1.5 px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">
                 {category.icon && <span className="material-symbols-outlined text-[18px]">{category.icon}</span>}
                 <span>{category.name}</span>
-              </NavLink>
+              </Link>
             ))}
           </nav>
         </div>
@@ -138,3 +141,7 @@ const Navbar = () => {
 };
 
 export default Navbar;
+`;
+
+fs.writeFileSync(path.join(__dirname, 'src', 'components', 'Navbar.jsx'), navbarContent);
+console.log('Navbar rebuilt successfully.');

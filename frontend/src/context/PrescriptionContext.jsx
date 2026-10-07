@@ -10,7 +10,7 @@ export const PrescriptionProvider = ({ children }) => {
       id: 'RX-8842',
       title: 'Dr. Rahman - Monas 10mg',
       uploadDate: new Date(Date.now() - 172800000).toISOString(),
-      status: 'Approved',
+      status: 'APPROVED',
       fileName: 'prescription_rahman.pdf',
       type: 'pdf',
       preview: 'https://via.placeholder.com/400x500.png?text=PDF+Document',
@@ -23,7 +23,7 @@ export const PrescriptionProvider = ({ children }) => {
       id: 'RX-8843',
       title: 'Dr. Siddique - Insulin',
       uploadDate: new Date(Date.now() - 3600000).toISOString(),
-      status: 'Pending',
+      status: 'PENDING',
       fileName: 'insulin_slip.jpg',
       type: 'image',
       preview: 'https://via.placeholder.com/400x500.png?text=Prescription+Image',
@@ -34,7 +34,7 @@ export const PrescriptionProvider = ({ children }) => {
       id: 'RX-8844',
       title: 'General checkup - Napa',
       uploadDate: new Date(Date.now() - 7200000).toISOString(),
-      status: 'Pending',
+      status: 'PENDING',
       fileName: 'handwritten.jpg',
       type: 'image',
       preview: 'https://via.placeholder.com/400x500.png?text=Handwritten+RX',
@@ -45,8 +45,8 @@ export const PrescriptionProvider = ({ children }) => {
       id: 'RX-8845',
       title: 'Dr. Ahmed - Inhaler',
       uploadDate: new Date(Date.now() - 259200000).toISOString(),
-      status: 'Rejected',
-      reason: 'Image unclear',
+      status: 'REJECTED',
+      rejectionReason: 'Image unclear',
       fileName: 'blur_cam.jpg',
       type: 'image',
       preview: 'https://via.placeholder.com/400x500.png?text=Blurry+Image',
@@ -62,7 +62,7 @@ export const PrescriptionProvider = ({ children }) => {
   };
 
   const updatePrescriptionStatus = (id, status, reason = '') => {
-    setPrescriptions(prev => prev.map(rx => rx.id === id ? { ...rx, status, reason, reviewedDate: new Date().toISOString(), reviewedBy: 'Admin' } : rx));
+    setPrescriptions(prev => prev.map(rx => rx.id === id ? { ...rx, status, rejectionReason: reason, reviewedDate: new Date().toISOString(), reviewedBy: 'Admin' } : rx));
   };
 
   const deletePrescription = (id) => {

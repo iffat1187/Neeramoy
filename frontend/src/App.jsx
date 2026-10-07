@@ -57,6 +57,7 @@ function App() {
               <Route path="login" element={<LoginPage />} />
               <Route path="register" element={<RegisterPage />} />
               <Route path="search" element={<SearchResultsPage />} />
+              <Route path="health-concerns" element={<SearchResultsPage />} />
               
               {/* Account Routes */}
               <Route path="account" element={<ProtectedRoute><AccountLayout /></ProtectedRoute>}>
@@ -71,8 +72,11 @@ function App() {
                 <Route index element={<PrescriptionsPage />} />
               </Route>
 
-              <Route path="orders" element={<OrdersPage />} />
-              <Route path="orders/:orderId" element={<OrderDetailsPage />} />
+              {/* Orders under AccountLayout */}
+              <Route path="orders" element={<ProtectedRoute><AccountLayout /></ProtectedRoute>}>
+                <Route index element={<OrdersPage />} />
+                <Route path=":orderId" element={<OrderDetailsPage />} />
+              </Route>
             </Route>
 
             <Route path="/admin" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminLayout /></ProtectedRoute>}>

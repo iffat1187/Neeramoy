@@ -40,26 +40,27 @@ export const LandingPage = () => {
               Square, Beximco, ও Incepta থেকে সরাসরি সংগৃহীত ১০০% আসল ওষুধ। রেজিস্টার্ড 'এ' গ্রেড ফার্মাসিস্টের যাচাইকরণ এবং ২°C-৮°C কোল্ড-চেইন ডেলিভারি।
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center gap-space-md w-full max-w-xl">
+                        <form onSubmit={(e) => { e.preventDefault(); const val = e.target.elements.q.value; if(val) navigate('/search?q='+encodeURIComponent(val)); else navigate('/search'); }} className="flex flex-col sm:flex-row items-center gap-space-md w-full max-w-xl">
               <div className="flex-1 w-full bg-surface-container-lowest rounded-xl flex items-center px-space-md py-3 shadow-md focus-within:ring-2 focus-within:ring-primary/50 transition-all">
                 <span className="material-symbols-outlined text-outline mr-3">search</span>
                 <input 
                   type="text" 
+                  name="q"
                   placeholder="ওষুধের নাম লিখুন (যেমন: Napa, Sergel 20...)" 
                   className="w-full border-0 bg-transparent outline-none text-body-md text-on-surface placeholder:text-outline" 
                 />
               </div>
-              <Button variant="primary" className="w-full sm:w-auto h-full py-3.5 px-8" onClick={() => navigate('/search')}>
+              <Button type="submit" variant="primary" className="w-full sm:w-auto h-full py-3.5 px-8">
                 খুঁজুন
               </Button>
-            </div>
+            </form>
 
             <div className="flex flex-wrap items-center gap-space-sm pt-2">
               <span className="font-label-sm text-outline uppercase tracking-wider">জনপ্রিয় অনুসন্ধান:</span>
-              <span className="bg-surface-container px-3 py-1 rounded-full text-on-surface font-label-sm cursor-pointer hover:bg-surface-container-high transition-colors">Napa Extra</span>
-              <span className="bg-surface-container px-3 py-1 rounded-full text-on-surface font-label-sm cursor-pointer hover:bg-surface-container-high transition-colors">Sergel 20</span>
-              <span className="bg-surface-container px-3 py-1 rounded-full text-on-surface font-label-sm cursor-pointer hover:bg-surface-container-high transition-colors">Monas 10</span>
-              <span className="bg-surface-container px-3 py-1 rounded-full text-on-surface font-label-sm cursor-pointer hover:bg-surface-container-high transition-colors">ভিটামিন (Vitamin)</span>
+              <span className="bg-surface-container px-3 py-1 rounded-full text-on-surface font-label-sm cursor-pointer hover:bg-surface-container-high transition-colors" onClick={() => navigate("/search?q=Napa")}>Napa Extra</span>
+              <span className="bg-surface-container px-3 py-1 rounded-full text-on-surface font-label-sm cursor-pointer hover:bg-surface-container-high transition-colors" onClick={() => navigate("/search?q=Sergel")}>Sergel 20</span>
+              <span className="bg-surface-container px-3 py-1 rounded-full text-on-surface font-label-sm cursor-pointer hover:bg-surface-container-high transition-colors" onClick={() => navigate("/search?q=Monas")}>Monas 10</span>
+              <span className="bg-surface-container px-3 py-1 rounded-full text-on-surface font-label-sm cursor-pointer hover:bg-surface-container-high transition-colors" onClick={() => navigate("/category/supplement")}>ভিটামিন (Vitamin)</span>
             </div>
 
             <div className="grid grid-cols-3 gap-space-md pt-space-lg">
@@ -174,16 +175,16 @@ export const LandingPage = () => {
           
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-space-sm sm:gap-space-md">
             {[
-              { title: 'প্রেসক্রিপশন ওষুধ', icon: 'prescriptions', color: 'bg-primary-container text-primary' },
-              { title: 'ডায়াবেটিস ও ইনসুলিন', icon: 'vaccines', color: 'bg-secondary-fixed text-secondary' },
-              { title: 'হার্ট ও প্রেশার', icon: 'cardiology', color: 'bg-error-container text-error' },
-              { title: 'মা ও শিশু যত্ন', icon: 'child_care', color: 'bg-tertiary-fixed text-tertiary' },
-              { title: 'সার্জিক্যাল ও হাইজিন', icon: 'sanitizer', color: 'bg-primary-fixed text-primary' },
-              { title: 'গ্যাস্ট্রিক ও এসিডিটি', icon: 'pill', color: 'bg-surface-container-high text-on-surface-variant' },
-              { title: 'মেডিকেল ডিভাইস', icon: 'monitor_heart', color: 'bg-surface-container-highest text-on-surface-variant' },
-              { title: 'ভিটামিন ও নিউট্রিশন', icon: 'nutrition', color: 'bg-secondary-container text-secondary' },
+              { title: 'প্রেসক্রিপশন ওষুধ', icon: 'prescriptions', color: 'bg-primary-container text-primary', path: '/category/medicine' },
+              { title: 'ডায়াবেটিস ও ইনসুলিন', icon: 'vaccines', color: 'bg-secondary-fixed text-secondary', path: '/category/diabetes' },
+              { title: 'হার্ট ও প্রেশার', icon: 'cardiology', color: 'bg-error-container text-error', path: '/category/cardiac' },
+              { title: 'মা ও শিশু যত্ন', icon: 'child_care', color: 'bg-tertiary-fixed text-tertiary', path: '/category/baby-mom' },
+              { title: 'সার্জিক্যাল ও হাইজিন', icon: 'sanitizer', color: 'bg-primary-fixed text-primary', path: '/category/home-care' },
+              { title: 'গ্যাস্ট্রিক ও এসিডিটি', icon: 'pill', color: 'bg-surface-container-high text-on-surface-variant', path: '/category/gastric' },
+              { title: 'মেডিকেল ডিভাইস', icon: 'monitor_heart', color: 'bg-surface-container-highest text-on-surface-variant', path: '/category/device' },
+              { title: 'ভিটামিন ও নিউট্রিশন', icon: 'nutrition', color: 'bg-secondary-container text-secondary', path: '/category/supplement' },
             ].map((cat, i) => (
-              <div key={i} className="flex flex-col items-center text-center group cursor-pointer" onClick={() => navigate('/search')}>
+              <div key={i} className="flex flex-col items-center text-center group cursor-pointer" onClick={() => navigate(cat.path)}>
                 <div className={`w-16 h-16 rounded-full ${cat.color} flex items-center justify-center mb-space-sm group-hover:scale-110 transition-transform shadow-sm`}>
                   <span className="material-symbols-outlined text-[28px]">{cat.icon}</span>
                 </div>
