@@ -8,6 +8,8 @@ export const AuthProvider = ({ children }) => {
   // Mock auth state
   const [user, setUser] = useState(null);
 
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const login = (email, password) => {
     // Mock login logic
     if (email && password) {
@@ -58,7 +60,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    setIsLoggingOut(true);
     setUser(null);
+    setTimeout(() => setIsLoggingOut(false), 100);
   };
 
   const updateUser = (newDetails) => {
@@ -69,6 +73,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider value={{
       user,
       isLoggedIn: !!user,
+      isLoggingOut,
       login,
       register,
       logout,
