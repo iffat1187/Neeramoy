@@ -67,7 +67,7 @@ export const LoginPage = () => {
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block font-label-md text-on-surface">Password</label>
-              <a href="#" className="text-[12px] text-primary hover:underline font-bold">Forgot Password?</a>
+              <Link to="/forgot-password" className="text-[12px] text-primary hover:underline font-bold">Forgot Password?</Link>
             </div>
             <input 
               type="password" 
