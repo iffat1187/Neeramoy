@@ -1,4 +1,8 @@
-import React, { useState } from 'react';
+const fs = require('fs');
+const path = require('path');
+
+const targetPath = path.join(__dirname, 'src', 'pages', 'account', 'ProfilePage.jsx');
+const content = `import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
@@ -157,7 +161,7 @@ export const ProfilePage = () => {
                 type={showCurrentPassword ? "text" : "password"} 
                 value={passwordData.currentPassword}
                 onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
-                className={`w-full p-3 pr-12 rounded-xl border ${passErrors.currentPassword ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none focus:border-primary`}
+                className={\`w-full p-3 pr-12 rounded-xl border \${passErrors.currentPassword ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none focus:border-primary\`}
                 placeholder="Enter current password"
               />
               <button 
@@ -178,7 +182,7 @@ export const ProfilePage = () => {
                 type={showNewPassword ? "text" : "password"} 
                 value={passwordData.newPassword}
                 onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                className={`w-full p-3 pr-12 rounded-xl border ${passErrors.newPassword ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none focus:border-primary`}
+                className={\`w-full p-3 pr-12 rounded-xl border \${passErrors.newPassword ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none focus:border-primary\`}
                 placeholder="Enter new password"
               />
               <button 
@@ -199,7 +203,7 @@ export const ProfilePage = () => {
                 type={showConfirmPassword ? "text" : "password"} 
                 value={passwordData.confirmPassword}
                 onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                className={`w-full p-3 pr-12 rounded-xl border ${passErrors.confirmPassword ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none focus:border-primary`}
+                className={\`w-full p-3 pr-12 rounded-xl border \${passErrors.confirmPassword ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none focus:border-primary\`}
                 placeholder="Confirm new password"
               />
               <button 
@@ -223,3 +227,5 @@ export const ProfilePage = () => {
     </div>
   );
 };
+`;
+fs.writeFileSync(targetPath, content);

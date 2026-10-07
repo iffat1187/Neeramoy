@@ -8,7 +8,7 @@ export const AdminLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
 
   const navItems = [
@@ -108,7 +108,7 @@ export const AdminLayout = () => {
           <div className="flex items-center gap-space-md">
             <div className="flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-lg border border-outline-variant/30">
               <span className="material-symbols-outlined text-[16px] text-primary">medication</span>
-              <span className="text-[12px] font-bold text-on-surface">Pharmacist on Duty: Dr. Sharmin Rashid</span>
+              <span className="text-[12px] font-bold text-on-surface">Pharmacist on Duty: {user?.name || 'Administrator'}</span>
               <span className="text-[10px] bg-primary-container text-on-primary-container px-1.5 py-0.5 rounded font-bold ml-2">(Reg: A-14920)</span>
             </div>
             <button className="flex items-center gap-1.5 text-primary hover:bg-primary-container/20 px-3 py-1.5 rounded-lg transition-colors">
@@ -129,13 +129,15 @@ export const AdminLayout = () => {
               <span className="material-symbols-outlined text-outline">notifications</span>
               <div className="absolute top-0 right-0 w-2 h-2 rounded-full bg-error"></div>
             </div>
-            <div className="flex items-center gap-2 ml-2">
-              <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold">SR</div>
-              <div className="flex flex-col">
-                <span className="text-[12px] font-bold text-on-surface">Dr. Sharmin</span>
-                <span className="text-[10px] text-on-surface-variant">Superintendent</span>
+            <Link to="/admin/profile" className="flex items-center gap-2 ml-2 hover:bg-surface-container p-1 rounded-lg transition-colors cursor-pointer">
+              <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold">
+                {user?.name?.charAt(0) || 'A'}
               </div>
-            </div>
+              <div className="flex flex-col">
+                <span className="text-[12px] font-bold text-on-surface">{user?.name || 'Administrator'}</span>
+                <span className="text-[10px] text-on-surface-variant">{user?.role || 'Superintendent'}</span>
+              </div>
+            </Link>
           </div>
         </header>
 

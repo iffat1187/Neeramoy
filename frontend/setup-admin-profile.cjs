@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from 'react';
+const fs = require('fs');
+const path = require('path');
+
+const targetPath = path.join(__dirname, 'src', 'pages', 'admin', 'AdminProfilePage.jsx');
+const content = `import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
@@ -23,10 +27,6 @@ export const AdminProfilePage = () => {
   const [passErrors, setPassErrors] = useState({});
   const [passSuccess, setPassSuccess] = useState('');
 
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   // Sync form data if user changes from context
   useEffect(() => {
     setFormData({
@@ -39,7 +39,7 @@ export const AdminProfilePage = () => {
   const validateProfile = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'Full name is required';
-    if (!formData.email.trim() || !/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = 'Valid email is required';
+    if (!formData.email.trim() || !/^\\S+@\\S+\\.\\S+$/.test(formData.email)) newErrors.email = 'Valid email is required';
     if (!formData.phone.trim() || formData.phone.length < 10) newErrors.phone = 'Valid phone number is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -157,7 +157,7 @@ export const AdminProfilePage = () => {
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     disabled={!isEditing}
-                    className={`w-full p-3 rounded-xl border ${errors.name ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none ${isEditing ? 'focus:border-primary' : 'opacity-70'}`}
+                    className={\`w-full p-3 rounded-xl border \${errors.name ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none \${isEditing ? 'focus:border-primary' : 'opacity-70'}\`}
                   />
                   {errors.name && <p className="text-error text-[10px] mt-1">{errors.name}</p>}
                 </div>
@@ -169,7 +169,7 @@ export const AdminProfilePage = () => {
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     disabled={!isEditing}
-                    className={`w-full p-3 rounded-xl border ${errors.email ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none ${isEditing ? 'focus:border-primary' : 'opacity-70'}`}
+                    className={\`w-full p-3 rounded-xl border \${errors.email ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none \${isEditing ? 'focus:border-primary' : 'opacity-70'}\`}
                   />
                   {errors.email && <p className="text-error text-[10px] mt-1">{errors.email}</p>}
                 </div>
@@ -181,7 +181,7 @@ export const AdminProfilePage = () => {
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
                     disabled={!isEditing}
-                    className={`w-full p-3 rounded-xl border ${errors.phone ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none ${isEditing ? 'focus:border-primary' : 'opacity-70'}`}
+                    className={\`w-full p-3 rounded-xl border \${errors.phone ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none \${isEditing ? 'focus:border-primary' : 'opacity-70'}\`}
                   />
                   {errors.phone && <p className="text-error text-[10px] mt-1">{errors.phone}</p>}
                 </div>
@@ -213,62 +213,35 @@ export const AdminProfilePage = () => {
             <form onSubmit={handlePasswordSubmit} className="space-y-4 max-w-md">
               <div>
                 <label className="block text-label-sm font-bold text-on-surface mb-1">Current Password</label>
-                <div className="relative">
-                  <input 
-                    type={showCurrentPassword ? "text" : "password"} 
-                    value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
-                    className={`w-full p-3 pr-12 rounded-xl border ${passErrors.currentPassword ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none focus:border-primary`}
-                    placeholder="Enter current password"
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors focus:outline-none flex items-center justify-center w-8 h-8 rounded-full hover:bg-surface-container"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">{showCurrentPassword ? 'visibility_off' : 'visibility'}</span>
-                  </button>
-                </div>
+                <input 
+                  type="password" 
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                  className={\`w-full p-3 rounded-xl border \${passErrors.currentPassword ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none focus:border-primary\`}
+                  placeholder="Enter current password"
+                />
                 {passErrors.currentPassword && <p className="text-error text-[10px] mt-1">{passErrors.currentPassword}</p>}
               </div>
               <div>
                 <label className="block text-label-sm font-bold text-on-surface mb-1">New Password</label>
-                <div className="relative">
-                  <input 
-                    type={showNewPassword ? "text" : "password"} 
-                    value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                    className={`w-full p-3 pr-12 rounded-xl border ${passErrors.newPassword ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none focus:border-primary`}
-                    placeholder="Enter new password"
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors focus:outline-none flex items-center justify-center w-8 h-8 rounded-full hover:bg-surface-container"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">{showNewPassword ? 'visibility_off' : 'visibility'}</span>
-                  </button>
-                </div>
+                <input 
+                  type="password" 
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                  className={\`w-full p-3 rounded-xl border \${passErrors.newPassword ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none focus:border-primary\`}
+                  placeholder="Enter new password"
+                />
                 {passErrors.newPassword && <p className="text-error text-[10px] mt-1">{passErrors.newPassword}</p>}
               </div>
               <div>
                 <label className="block text-label-sm font-bold text-on-surface mb-1">Confirm New Password</label>
-                <div className="relative">
-                  <input 
-                    type={showConfirmPassword ? "text" : "password"} 
-                    value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                    className={`w-full p-3 pr-12 rounded-xl border ${passErrors.confirmPassword ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none focus:border-primary`}
-                    placeholder="Confirm new password"
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors focus:outline-none flex items-center justify-center w-8 h-8 rounded-full hover:bg-surface-container"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">{showConfirmPassword ? 'visibility_off' : 'visibility'}</span>
-                  </button>
-                </div>
+                <input 
+                  type="password" 
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                  className={\`w-full p-3 rounded-xl border \${passErrors.confirmPassword ? 'border-error' : 'border-outline-variant/50'} bg-surface-container-lowest text-on-surface focus:outline-none focus:border-primary\`}
+                  placeholder="Confirm new password"
+                />
                 {passErrors.confirmPassword && <p className="text-error text-[10px] mt-1">{passErrors.confirmPassword}</p>}
               </div>
               <div className="pt-2">
@@ -281,3 +254,7 @@ export const AdminProfilePage = () => {
     </div>
   );
 };
+`;
+
+fs.writeFileSync(targetPath, content);
+console.log('Done writing AdminProfilePage.jsx');
