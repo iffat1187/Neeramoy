@@ -1,11 +1,13 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { LogoutConfirmationModal } from '../common/LogoutConfirmationModal';
 
 export const AccountLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
   
   const navItems = [
     { name: 'Overview', path: '/account', icon: 'dashboard' },
@@ -48,7 +50,7 @@ export const AccountLayout = () => {
               );
             })}
             <button
-              onClick={() => { navigate('/'); logout(); }}
+              onClick={() => setIsLogoutModalOpen(true)}
               className="w-full flex items-center gap-space-md px-space-md py-space-md text-error hover:bg-error-container/10 transition-colors text-left"
             >
               <span className="material-symbols-outlined">logout</span>
@@ -62,6 +64,17 @@ export const AccountLayout = () => {
           <Outlet />
         </div>
       </div>
+      
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmationModal 
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={() => {
+          setIsLogoutModalOpen(false);
+          navigate('/');
+          logout();
+        }}
+      />
     </div>
   );
 };

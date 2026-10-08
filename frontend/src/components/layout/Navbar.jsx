@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate, useSearchParams, useLocation } from 'react-
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { LogoutConfirmationModal } from '../common/LogoutConfirmationModal';
 
 export const Navbar = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ export const Navbar = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = React.useState(searchParams.get('q') || '');
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
 
   React.useEffect(() => {
     setSearchQuery(searchParams.get('q') || '');
@@ -153,7 +155,7 @@ export const Navbar = () => {
                   <Link to="/account/profile" className="w-full text-left px-4 py-2 hover:bg-surface-container text-body-sm text-on-surface flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px]">person</span> Profile
                   </Link>
-                  <button onClick={() => { navigate('/'); logout(); }} className="w-full text-left px-4 py-2 hover:bg-error-container/20 text-body-sm text-error flex items-center gap-2">
+                  <button onClick={() => setIsLogoutModalOpen(true)} className="w-full text-left px-4 py-2 hover:bg-error-container/20 text-body-sm text-error flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px]">logout</span> Logout
                   </button>
                 </div>
@@ -181,6 +183,16 @@ export const Navbar = () => {
           </nav>
         </div>
       </div>
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmationModal 
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={() => {
+          setIsLogoutModalOpen(false);
+          navigate('/');
+          logout();
+        }}
+      />
     </header>
   );
 };

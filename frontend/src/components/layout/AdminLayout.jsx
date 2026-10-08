@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { Badge } from '../common/Badge';
+import { LogoutConfirmationModal } from '../common/LogoutConfirmationModal';
 
 export const AdminLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -10,6 +11,7 @@ export const AdminLayout = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const navItems = [
     { name: 'Dashboard', path: '/admin', icon: 'dashboard' },
@@ -22,8 +24,7 @@ export const AdminLayout = () => {
   ];
 
   const handleLogout = () => {
-    navigate('/');
-    logout();
+    setIsLogoutModalOpen(true);
   };
 
   return (
@@ -143,6 +144,17 @@ export const AdminLayout = () => {
 
         <Outlet />
       </main>
+      
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmationModal 
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={() => {
+          setIsLogoutModalOpen(false);
+          navigate('/');
+          logout();
+        }}
+      />
     </div>
   );
 };

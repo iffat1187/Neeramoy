@@ -4,11 +4,13 @@ import { useAuth } from '../../context/AuthContext';
 import { useOrder } from '../../context/OrderContext';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
+import { LogoutConfirmationModal } from '../../components/common/LogoutConfirmationModal';
 
 export const DashboardPage = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { orders } = useOrder();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
 
   const activeOrdersCount = orders ? orders.filter(o => !['Delivered', 'Cancelled'].includes(o.status)).length : 0;
   const recentOrders = orders ? [...orders].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 2) : [];
@@ -251,7 +253,7 @@ export const DashboardPage = () => {
             <span className="material-symbols-outlined text-primary">call</span>
           </div>
 
-          <button onClick={() => { navigate('/'); logout(); }} className="w-full flex items-center gap-space-md p-space-md hover:bg-error-container/10 transition-colors text-left">
+          <button onClick={() => setIsLogoutModalOpen(true)} className="w-full flex items-center gap-space-md p-space-md hover:bg-error-container/10 transition-colors text-left">
             <div className="w-10 h-10 rounded-full bg-error-container/50 text-error flex items-center justify-center">
               <span className="material-symbols-outlined">logout</span>
             </div>
@@ -263,6 +265,17 @@ export const DashboardPage = () => {
           </button>
         </div>
       </div>
+      
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmationModal 
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={() => {
+          setIsLogoutModalOpen(false);
+          navigate('/');
+          logout();
+        }}
+      />
     </div>
   );
 };
