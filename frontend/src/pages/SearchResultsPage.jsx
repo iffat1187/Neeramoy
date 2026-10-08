@@ -19,9 +19,29 @@ export const SearchResultsPage = () => {
   const [filteredMedicines, setFilteredMedicines] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const getEffectiveType = () => {
+    if (categoryId === 'otc-medicine') return 'otc';
+    if (categoryId === 'prescription-medicine') return 'rx';
+    return searchParams.get('prescriptionType') || 'all';
+  };
+
+  const getMappedCategoryArray = (cat) => {
+    if (!cat) return [];
+    const map = {
+      'medical-device': ['devices'],
+      'device': ['devices'],
+      'surgical-hygiene': ['hygiene'],
+      'home-care': ['hygiene'],
+      'supplement': ['vitamins'],
+      'fever': ['fever', 'pain']
+      // 'diabetes' and 'cardiac' remain unmapped as they do not exist natively in the mockData
+    };
+    return map[cat] || [cat];
+  };
+
   const [filters, setFilters] = useState({
-    type: searchParams.get('prescriptionType') || 'all',
-    category: (categoryId === 'medicine' || !categoryId) ? 'all' : categoryId,
+    type: getEffectiveType(),
+    healthCategory: searchParams.get('healthCategory') || 'all',
     manufacturer: searchParams.get('manufacturer'),
     maxPrice: 1500
   });
@@ -34,9 +54,9 @@ export const SearchResultsPage = () => {
   useEffect(() => {
     setFilters(prev => ({
       ...prev,
-      category: (categoryId === 'medicine' || !categoryId) ? 'all' : categoryId,
+      healthCategory: searchParams.get('healthCategory') || 'all',
       manufacturer: searchParams.get('manufacturer'),
-      type: searchParams.get('prescriptionType') || 'all'
+      type: getEffectiveType()
     }));
   }, [searchParams, categoryId]);
 
@@ -53,10 +73,32 @@ export const SearchResultsPage = () => {
 
   const handleTypeChange = (typeVal) => {
     const newParams = new URLSearchParams(searchParams);
+    newParams.delete('page');
+
+    if (categoryId === 'otc-medicine' || categoryId === 'prescription-medicine') {
+      newParams.delete('prescriptionType');
+      let newPath = '/category/medicine';
+      if (typeVal === 'otc') newPath = '/category/otc-medicine';
+      else if (typeVal === 'rx') newPath = '/category/prescription-medicine';
+      
+      navigate(`${newPath}?${newParams.toString()}`);
+      return;
+    }
+
     if (typeVal === 'all' || !typeVal) {
       newParams.delete('prescriptionType');
     } else {
       newParams.set('prescriptionType', typeVal);
+    }
+    setSearchParams(newParams);
+  };
+
+  const handleHealthCategoryChange = (catVal) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (catVal === 'all' || !catVal) {
+      newParams.delete('healthCategory');
+    } else {
+      newParams.set('healthCategory', catVal);
     }
     newParams.delete('page');
     setSearchParams(newParams);
@@ -73,10 +115,17 @@ export const SearchResultsPage = () => {
       
       // Apply Search Query if any
       if (query) {
-        results = results.filter(m => 
-          m.name.toLowerCase().includes(query.toLowerCase()) || 
-          m.genericName.toLowerCase().includes(query.toLowerCase())
-        );
+        const q = query.toLowerCase();
+        results = results.filter(m => {
+          const nameMatch = m.name?.toLowerCase().includes(q);
+          const genericMatch = m.genericName?.toLowerCase().includes(q);
+          const manufacturerMatch = m.manufacturer?.toLowerCase().includes(q);
+          const categoryMatch = m.category?.toLowerCase().includes(q);
+          const descMatch = m.description?.toLowerCase().includes(q);
+          const indicationMatch = m.indications?.some(ind => ind.toLowerCase().includes(q));
+          
+          return nameMatch || genericMatch || manufacturerMatch || categoryMatch || descMatch || indicationMatch;
+        });
       }
       
       setMedicines(results);
@@ -102,9 +151,18 @@ export const SearchResultsPage = () => {
     // Price Filter
     filtered = filtered.filter(m => m.price <= currentFilters.maxPrice);
     
-    // Category Filter (Mock implementation based on generic grouping or explicit category if added)
-    if (currentFilters.category !== 'all') {
-      filtered = filtered.filter(m => m.category === currentFilters.category);
+    // Main Route Filter (from URL Path)
+    if (categoryId === 'special-offers') {
+      filtered = filtered.filter(m => m.discount > 0);
+    } else if (categoryId && categoryId !== 'medicine' && categoryId !== 'otc-medicine' && categoryId !== 'prescription-medicine' && categoryId !== 'all') {
+      const mappedRouteCategories = getMappedCategoryArray(categoryId);
+      filtered = filtered.filter(m => mappedRouteCategories.includes(m.category));
+    }
+    
+    // Health Category Sub-filter (from URL Query Param)
+    if (currentFilters.healthCategory !== 'all') {
+      const mappedHealthCategories = getMappedCategoryArray(currentFilters.healthCategory);
+      filtered = filtered.filter(m => mappedHealthCategories.includes(m.category));
     }
 
     // Manufacturer Filter
@@ -129,11 +187,12 @@ export const SearchResultsPage = () => {
     newParams2.delete('manufacturer');
     newParams2.delete('page');
     newParams2.delete('prescriptionType');
+    newParams2.delete('healthCategory');
     setSearchParams(newParams2);
 
     setFilters({
-      type: 'all',
-      category: (categoryId === 'medicine' || !categoryId) ? 'all' : categoryId,
+      type: getEffectiveType(),
+      healthCategory: 'all',
       manufacturer: null,
       maxPrice: 1500
     });
@@ -277,19 +336,19 @@ export const SearchResultsPage = () => {
             <div className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm border border-outline-variant/30">
               <h2 className="font-headline-sm font-bold text-on-surface mb-space-sm">স্বাস্থ্য ক্যাটাগরি</h2>
               <div className="space-y-1 flex flex-col">
-                <button onClick={() => updateFilter({ category: 'all'})} className={`text-left px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.category === 'all' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
+                <button onClick={() => handleHealthCategoryChange('all')} className={`text-left px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.healthCategory === 'all' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
                   সকল ক্যাটাগরি
                 </button>
-                <button onClick={() => updateFilter({ category: 'gastric'})} className={`text-left flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.category === 'gastric' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
+                <button onClick={() => handleHealthCategoryChange('gastric')} className={`text-left flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.healthCategory === 'gastric' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
                   <span className="material-symbols-outlined text-[16px]">pill</span> গ্যাস্ট্রিক ও এসিডিটি
                 </button>
-                <button onClick={() => updateFilter({ category: 'diabetes'})} className={`text-left flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.category === 'diabetes' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
+                <button onClick={() => handleHealthCategoryChange('diabetes')} className={`text-left flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.healthCategory === 'diabetes' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
                   <span className="material-symbols-outlined text-[16px]">blood_pressure</span> ডায়াবেটিস
                 </button>
-                <button onClick={() => updateFilter({ category: 'cardiac'})} className={`text-left flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.category === 'cardiac' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
+                <button onClick={() => handleHealthCategoryChange('cardiac')} className={`text-left flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.healthCategory === 'cardiac' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
                   <span className="material-symbols-outlined text-[16px]">cardiology</span> কার্ডিওভাসকুলার
                 </button>
-                <button onClick={() => updateFilter({ category: 'fever'})} className={`text-left flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.category === 'fever' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
+                <button onClick={() => handleHealthCategoryChange('fever')} className={`text-left flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.healthCategory === 'fever' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
                   <span className="material-symbols-outlined text-[16px]">thermostat</span> জ্বর ও ব্যথা
                 </button>
               </div>

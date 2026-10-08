@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -9,6 +9,33 @@ export const Navbar = () => {
   const { cartCount, cartTotal } = useCart();
   const { user, isLoggedIn, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const [searchQuery, setSearchQuery] = React.useState(searchParams.get('q') || '');
+
+  React.useEffect(() => {
+    setSearchQuery(searchParams.get('q') || '');
+  }, [searchParams]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // If we are already on a category or search page, maintain other filters if desired, 
+      // but usually search from the nav initiates a new search
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/category/medicine');
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    if (location.pathname.includes('/search') || location.pathname.includes('/category')) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('q');
+      setSearchParams(newParams);
+    }
+  };
   
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
@@ -46,14 +73,25 @@ export const Navbar = () => {
           </div>
         </Link>
         
-        <div className="flex-1 max-w-xl hidden md:flex items-center bg-surface-container-low rounded-xl px-space-md py-space-xs focus-within:bg-surface-container-lowest focus-within:shadow-[0_2px_8px_rgba(0,103,92,0.12)] transition-all">
+        <form onSubmit={handleSearch} className="flex-1 max-w-xl hidden md:flex items-center bg-surface-container-low rounded-xl px-space-md py-space-xs focus-within:bg-surface-container-lowest focus-within:shadow-[0_2px_8px_rgba(0,103,92,0.12)] transition-all">
           <span className="material-symbols-outlined text-outline text-[20px] mr-space-xs shrink-0">search</span>
           <input 
             type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by medicine brand, generic name..." 
             className="w-full bg-transparent border-0 outline-none text-body-md text-on-surface placeholder:text-outline-variant h-10"
           />
-        </div>
+          {searchQuery && (
+            <button 
+              type="button" 
+              onClick={handleClearSearch} 
+              className="material-symbols-outlined text-outline-variant hover:text-on-surface text-[20px] p-1 ml-1 cursor-pointer"
+            >
+              close
+            </button>
+          )}
+        </form>
         
         <div className="flex items-center gap-space-md shrink-0">
           <button onClick={() => navigate('/login')} className="hidden lg:flex items-center gap-2 bg-primary-container text-on-primary-container px-space-md py-2.5 rounded-xl font-label-lg font-bold hover:bg-primary hover:text-on-primary transition-all">
