@@ -20,9 +20,9 @@ export const SearchResultsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [filters, setFilters] = useState({
-    type: 'all',
-    category: categoryId || 'all',
-    manufacturer: urlManufacturer,
+    type: searchParams.get('prescriptionType') || 'all',
+    category: (categoryId === 'medicine' || !categoryId) ? 'all' : categoryId,
+    manufacturer: searchParams.get('manufacturer'),
     maxPrice: 1500
   });
   const [sortBy, setSortBy] = useState('popularity');
@@ -34,9 +34,11 @@ export const SearchResultsPage = () => {
   useEffect(() => {
     setFilters(prev => ({
       ...prev,
-      manufacturer: searchParams.get('manufacturer')
+      category: (categoryId === 'medicine' || !categoryId) ? 'all' : categoryId,
+      manufacturer: searchParams.get('manufacturer'),
+      type: searchParams.get('prescriptionType') || 'all'
     }));
-  }, [searchParams]);
+  }, [searchParams, categoryId]);
 
   const handleManufacturerChange = (mfg) => {
     const newParams = new URLSearchParams(searchParams);
@@ -45,8 +47,19 @@ export const SearchResultsPage = () => {
     } else {
       newParams.set('manufacturer', mfg);
     }
+    newParams.delete('page');
     setSearchParams(newParams);
-    updateFilter({ manufacturer: mfg });
+  };
+
+  const handleTypeChange = (typeVal) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (typeVal === 'all' || !typeVal) {
+      newParams.delete('prescriptionType');
+    } else {
+      newParams.set('prescriptionType', typeVal);
+    }
+    newParams.delete('page');
+    setSearchParams(newParams);
   };
 
   useEffect(() => {
@@ -112,14 +125,15 @@ export const SearchResultsPage = () => {
   };
 
   const clearFilters = () => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.delete('manufacturer');
-    newParams.delete('page');
-    setSearchParams(newParams);
+    const newParams2 = new URLSearchParams(searchParams);
+    newParams2.delete('manufacturer');
+    newParams2.delete('page');
+    newParams2.delete('prescriptionType');
+    setSearchParams(newParams2);
 
     setFilters({
       type: 'all',
-      category: categoryId || 'all',
+      category: (categoryId === 'medicine' || !categoryId) ? 'all' : categoryId,
       manufacturer: null,
       maxPrice: 1500
     });
@@ -239,19 +253,19 @@ export const SearchResultsPage = () => {
               </h2>
               <div className="space-y-space-xs">
                 <label className="flex items-center gap-space-xs cursor-pointer text-body-sm text-on-surface">
-                  <input type="radio" name="rx_filter" checked={filters.type === 'all'} onChange={() => updateFilter({ type: 'all'})} className="w-4 h-4 text-primary accent-primary" />
+                  <input type="radio" name="rx_filter" checked={filters.type === 'all'} onChange={() => handleTypeChange('all')} className="w-4 h-4 text-primary accent-primary" />
                   <span>সকল ওষুধ (All)</span>
                 </label>
                 <label className="flex items-center justify-between cursor-pointer text-body-sm text-on-surface">
                   <span className="flex items-center gap-space-xs">
-                    <input type="radio" name="rx_filter" checked={filters.type === 'otc'} onChange={() => updateFilter({ type: 'otc'})} className="w-4 h-4 text-primary accent-primary" />
+                    <input type="radio" name="rx_filter" checked={filters.type === 'otc'} onChange={() => handleTypeChange('otc')} className="w-4 h-4 text-primary accent-primary" />
                     <span>OTC (প্রেসক্রিপশন ছাড়াই)</span>
                   </span>
                   <span className="text-[11px] bg-secondary-container text-on-secondary-container dark:bg-secondary/15 dark:text-secondary px-1.5 py-0.5 rounded font-bold">OTC</span>
                 </label>
                 <label className="flex items-center justify-between cursor-pointer text-body-sm text-on-surface">
                   <span className="flex items-center gap-space-xs">
-                    <input type="radio" name="rx_filter" checked={filters.type === 'rx'} onChange={() => updateFilter({ type: 'rx'})} className="w-4 h-4 text-primary accent-primary" />
+                    <input type="radio" name="rx_filter" checked={filters.type === 'rx'} onChange={() => handleTypeChange('rx')} className="w-4 h-4 text-primary accent-primary" />
                     <span>প্রেসক্রিপশন আবশ্যক (Rx)</span>
                   </span>
                   <span className="text-[11px] bg-tertiary-container/15 text-tertiary px-1.5 py-0.5 rounded font-bold">Rx</span>

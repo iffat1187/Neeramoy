@@ -13,9 +13,10 @@ export const AdminOrderDetailsPage = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   
-  // Cancellation state
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
-  const [cancelReason, setCancelReason] = useState('Customer requested cancellation');
+  const [cancelReason, setCancelReason] = useState('Customer requested');
+  const [customReason, setCustomReason] = useState('');
 
   const order = getOrder(orderId);
 
@@ -41,10 +42,24 @@ export const AdminOrderDetailsPage = () => {
     setTimeout(() => setSuccessMsg(''), 4000);
   };
 
+  const handleApproveOrder = () => {
+    updateOrderStatus(order.id, 'Confirmed');
+    setApproveModalOpen(false);
+    setSuccessMsg('Order approved successfully.');
+    setTimeout(() => setSuccessMsg(''), 4000);
+  };
+
   const handleCancelOrder = () => {
-    updateOrderStatus(order.id, 'Cancelled', cancelReason);
+    const finalReason = cancelReason === 'Other' ? customReason : cancelReason;
+    if (!finalReason.trim()) {
+      alert("Please provide a cancellation reason.");
+      return;
+    }
+    updateOrderStatus(order.id, 'Cancelled', finalReason);
     setCancelModalOpen(false);
     setSuccessMsg('Order cancelled successfully.');
+    setCancelReason('Customer requested');
+    setCustomReason('');
     setTimeout(() => setSuccessMsg(''), 4000);
   };
 
@@ -91,6 +106,14 @@ export const AdminOrderDetailsPage = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          {order.status === 'Pending' && (
+            <button 
+              onClick={() => setApproveModalOpen(true)}
+              className="bg-success text-on-success px-4 py-2 rounded-lg font-label-md font-bold hover:opacity-90 transition-colors"
+            >
+              Approve Order
+            </button>
+          )}
           {isCancellable && (
             <button 
               onClick={() => setCancelModalOpen(true)}
@@ -267,17 +290,51 @@ export const AdminOrderDetailsPage = () => {
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
                 >
-                  <option value="Customer requested cancellation">Customer requested cancellation</option>
+                  <option value="Customer requested">Customer requested</option>
                   <option value="Out of stock">Out of stock</option>
                   <option value="Payment issue">Payment issue</option>
                   <option value="Delivery issue">Delivery issue</option>
                   <option value="Other">Other</option>
                 </select>
+                {cancelReason === 'Other' && (
+                  <input 
+                    type="text" 
+                    placeholder="Enter reason..." 
+                    className="mt-2 w-full bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:border-primary text-body-sm"
+                    value={customReason}
+                    onChange={(e) => setCustomReason(e.target.value)}
+                  />
+                )}
               </div>
             </div>
             <div className="p-space-md border-t border-outline-variant/30 flex justify-end gap-3 bg-surface-container-low">
               <button onClick={() => setCancelModalOpen(false)} className="px-4 py-2 rounded-lg font-label-md font-bold text-on-surface hover:bg-surface-container-high transition-colors">Abort</button>
               <button onClick={handleCancelOrder} className="px-4 py-2 rounded-lg font-label-md font-bold bg-error text-on-error hover:bg-error/90 transition-colors">Confirm Cancellation</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approval Modal */}
+      {approveModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-scrim/50 backdrop-blur-sm">
+          <div className="bg-surface rounded-xl shadow-lg border border-outline-variant/30 w-full max-w-sm overflow-hidden flex flex-col animate-scale-in">
+            <div className="p-space-md border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low">
+              <h2 className="font-headline-sm font-bold text-on-surface">Approve Order</h2>
+              <button onClick={() => setApproveModalOpen(false)} className="p-1 rounded-full hover:bg-surface-container-high text-on-surface-variant">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+            <div className="p-space-md">
+              <p className="text-body-md text-on-surface">Are you sure you want to approve this order?</p>
+              <div className="mt-4 p-3 bg-surface-container-lowest rounded-lg border border-outline-variant/30 flex flex-col gap-1 text-body-sm">
+                <div><span className="font-bold">Order:</span> {order.id}</div>
+                <div><span className="font-bold">Total:</span> ৳{order.total?.toLocaleString()}</div>
+              </div>
+            </div>
+            <div className="p-space-md border-t border-outline-variant/30 flex justify-end gap-3 bg-surface-container-low">
+              <button onClick={() => setApproveModalOpen(false)} className="px-4 py-2 rounded-lg font-label-md font-bold text-on-surface hover:bg-surface-container-high transition-colors">Cancel</button>
+              <button onClick={handleApproveOrder} className="px-4 py-2 rounded-lg font-label-md font-bold bg-success text-on-success hover:opacity-90 transition-colors">Confirm Approval</button>
             </div>
           </div>
         </div>

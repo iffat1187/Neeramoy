@@ -7,11 +7,18 @@ import { usePagination } from '../../hooks/usePagination';
 import { Pagination } from '../../components/common/Pagination';
 
 export const AdminOrdersPage = () => {
-  const { orders } = useOrder();
+  const { orders, updateOrderStatus } = useOrder();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterPayment, setFilterPayment] = useState('All');
+
+  const [successMsg, setSuccessMsg] = useState('');
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [cancelReason, setCancelReason] = useState('Customer requested');
+  const [customReason, setCustomReason] = useState('');
 
   const filteredOrders = orders.filter(o => {
     const q = searchQuery.toLowerCase();
@@ -36,6 +43,41 @@ export const AdminOrdersPage = () => {
     goToPage(1);
   };
 
+  const handleApproveConfirm = () => {
+    if (!selectedOrder) return;
+    updateOrderStatus(selectedOrder.id || selectedOrder.orderId, 'Confirmed');
+    setSuccessMsg(`Order ${selectedOrder.id || selectedOrder.orderId} has been approved.`);
+    setApproveModalOpen(false);
+    setSelectedOrder(null);
+    setTimeout(() => setSuccessMsg(''), 5000);
+  };
+
+  const handleCancelConfirm = () => {
+    if (!selectedOrder) return;
+    const finalReason = cancelReason === 'Other' ? customReason : cancelReason;
+    if (!finalReason.trim()) {
+      alert("Please provide a reason");
+      return;
+    }
+    updateOrderStatus(selectedOrder.id || selectedOrder.orderId, 'Cancelled', finalReason);
+    setSuccessMsg(`Order ${selectedOrder.id || selectedOrder.orderId} has been cancelled.`);
+    setCancelModalOpen(false);
+    setSelectedOrder(null);
+    setCancelReason('Customer requested');
+    setCustomReason('');
+    setTimeout(() => setSuccessMsg(''), 5000);
+  };
+
+  const openApprove = (order) => {
+    setSelectedOrder(order);
+    setApproveModalOpen(true);
+  };
+
+  const openCancel = (order) => {
+    setSelectedOrder(order);
+    setCancelModalOpen(true);
+  };
+
   const getStatusBadge = (status) => {
     switch(status) {
       case 'Pending': return <Badge variant="warning">Pending</Badge>;
@@ -49,7 +91,13 @@ export const AdminOrdersPage = () => {
   };
 
   return (
-    <div className="space-y-space-md h-full flex flex-col p-space-lg">
+    <div className="space-y-space-md h-full flex flex-col p-space-lg relative">
+      {successMsg && (
+        <div className="bg-primary-container text-on-primary-container p-3 rounded-lg font-bold flex items-center gap-2 mb-2 transition-all">
+          <span className="material-symbols-outlined">check_circle</span>
+          {successMsg}
+        </div>
+      )}
       <div className="flex justify-between items-start mb-2">
         <div>
           <h1 className="font-headline-md font-bold text-on-surface">Order Management</h1>
@@ -118,9 +166,21 @@ export const AdminOrdersPage = () => {
                 <td className="p-4 font-price-sm font-bold text-primary">৳{order.total?.toLocaleString()}</td>
                 <td className="p-4">{getStatusBadge(order.status)}</td>
                 <td className="p-4 text-right">
-                  <Link to={`/admin/orders/${order.id}`} className="bg-surface-container-high text-on-surface px-4 py-2 rounded-lg text-label-sm font-bold hover:bg-surface-container-highest transition-colors inline-block">
-                    View Details
-                  </Link>
+                  <div className="flex items-center justify-end gap-2">
+                    <Link to={`/admin/orders/${order.id || order.orderId}`} className="bg-surface-container-high text-on-surface px-4 py-2 rounded-lg text-label-sm font-bold hover:bg-surface-container-highest transition-colors inline-block whitespace-nowrap">
+                      View Details
+                    </Link>
+                    {order.status === 'Pending' && (
+                      <button onClick={() => openApprove(order)} className="bg-success text-on-success px-4 py-2 rounded-lg text-label-sm font-bold hover:bg-success/90 transition-colors whitespace-nowrap">
+                        Approve
+                      </button>
+                    )}
+                    {(order.status === 'Pending' || order.status === 'Confirmed' || order.status === 'Processing') && (
+                      <button onClick={() => openCancel(order)} className="bg-error-container text-on-error-container px-4 py-2 rounded-lg text-label-sm font-bold hover:bg-error-container/90 transition-colors whitespace-nowrap">
+                        Cancel
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -144,6 +204,72 @@ export const AdminOrdersPage = () => {
           </div>
         )}
       </div>
+
+      {approveModalOpen && selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-scrim/50 backdrop-blur-sm">
+          <div className="bg-surface rounded-xl shadow-lg border border-outline-variant/30 w-full max-w-sm overflow-hidden flex flex-col animate-scale-in">
+            <div className="p-space-md border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low">
+              <h2 className="font-headline-sm font-bold text-on-surface">Approve Order</h2>
+              <button onClick={() => setApproveModalOpen(false)} className="p-1 rounded-full hover:bg-surface-container-high text-on-surface-variant">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+            <div className="p-space-md">
+              <p className="text-body-md text-on-surface">Are you sure you want to approve this order?</p>
+              <div className="mt-4 p-3 bg-surface-container-lowest rounded-lg border border-outline-variant/30 flex flex-col gap-1 text-body-sm">
+                <div><span className="font-bold">Order:</span> {selectedOrder.id || selectedOrder.orderId}</div>
+                <div><span className="font-bold">Customer:</span> {selectedOrder.customer?.name}</div>
+                <div><span className="font-bold">Total:</span> ৳{selectedOrder.total?.toLocaleString()}</div>
+              </div>
+            </div>
+            <div className="p-space-md border-t border-outline-variant/30 flex justify-end gap-3 bg-surface-container-low">
+              <button onClick={() => setApproveModalOpen(false)} className="px-4 py-2 rounded-lg font-label-md font-bold text-on-surface hover:bg-surface-container-high transition-colors">Cancel</button>
+              <button onClick={handleApproveConfirm} className="px-4 py-2 rounded-lg font-label-md font-bold bg-success text-on-success hover:opacity-90 transition-colors">Confirm Approval</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {cancelModalOpen && selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-scrim/50 backdrop-blur-sm">
+          <div className="bg-surface rounded-xl shadow-lg border border-outline-variant/30 w-full max-w-sm overflow-hidden flex flex-col animate-scale-in">
+            <div className="p-space-md border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low">
+              <h2 className="font-headline-sm font-bold text-on-surface">Cancel Order</h2>
+              <button onClick={() => setCancelModalOpen(false)} className="p-1 rounded-full hover:bg-surface-container-high text-on-surface-variant">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+            <div className="p-space-md flex flex-col gap-3">
+              <p className="text-body-md text-on-surface">Please select a reason for cancelling order {selectedOrder.id || selectedOrder.orderId}.</p>
+              <select 
+                className="w-full bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:border-primary text-body-sm"
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+              >
+                <option value="Customer requested">Customer requested</option>
+                <option value="Out of stock">Out of stock</option>
+                <option value="Payment issue">Payment issue</option>
+                <option value="Delivery issue">Delivery issue</option>
+                <option value="Other">Other</option>
+              </select>
+              {cancelReason === 'Other' && (
+                <input 
+                  type="text" 
+                  placeholder="Enter reason..." 
+                  className="w-full bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:border-primary text-body-sm"
+                  value={customReason}
+                  onChange={(e) => setCustomReason(e.target.value)}
+                />
+              )}
+            </div>
+            <div className="p-space-md border-t border-outline-variant/30 flex justify-end gap-3 bg-surface-container-low">
+              <button onClick={() => setCancelModalOpen(false)} className="px-4 py-2 rounded-lg font-label-md font-bold text-on-surface hover:bg-surface-container-high transition-colors">Abort</button>
+              <button onClick={handleCancelConfirm} className="px-4 py-2 rounded-lg font-label-md font-bold bg-error text-on-error hover:opacity-90 transition-colors">Confirm Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

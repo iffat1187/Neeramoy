@@ -37,13 +37,15 @@ export const usePagination = (items, pageSize = 20, useUrl = false, urlParam = '
     const validPage = Math.max(1, Math.min(pageNumber, totalPages));
     
     if (useUrl) {
-      const newParams = new URLSearchParams(searchParams);
-      if (validPage === 1) {
-        newParams.delete(urlParam);
-      } else {
-        newParams.set(urlParam, validPage);
-      }
-      setSearchParams(newParams);
+      setSearchParams(prevParams => {
+        const newParams = new URLSearchParams(prevParams);
+        if (validPage === 1) {
+          newParams.delete(urlParam);
+        } else {
+          newParams.set(urlParam, validPage);
+        }
+        return newParams;
+      });
     } else {
       setLocalPage(validPage);
     }
