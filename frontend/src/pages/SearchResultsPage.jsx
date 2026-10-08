@@ -4,6 +4,8 @@ import { MedicineCard } from '../components/common/MedicineCard';
 import { Button } from '../components/common/Button';
 import { useCart } from '../context/CartContext';
 import { medicineService } from '../services/medicineService';
+import { usePagination } from '../hooks/usePagination';
+import { Pagination } from '../components/common/Pagination';
 
 export const SearchResultsPage = () => {
   const { id: categoryId } = useParams();
@@ -25,6 +27,10 @@ export const SearchResultsPage = () => {
   });
   const [sortBy, setSortBy] = useState('popularity');
 
+  const {
+    currentPage, totalPages, totalItems, paginatedItems, goToPage, pageSize
+  } = usePagination(filteredMedicines, 20, true, 'page');
+
   useEffect(() => {
     setFilters(prev => ({
       ...prev,
@@ -40,7 +46,7 @@ export const SearchResultsPage = () => {
       newParams.set('manufacturer', mfg);
     }
     setSearchParams(newParams);
-    setFilters(prev => ({ ...prev, manufacturer: mfg }));
+    updateFilter({ manufacturer: mfg });
   };
 
   useEffect(() => {
@@ -108,6 +114,7 @@ export const SearchResultsPage = () => {
   const clearFilters = () => {
     const newParams = new URLSearchParams(searchParams);
     newParams.delete('manufacturer');
+    newParams.delete('page');
     setSearchParams(newParams);
 
     setFilters({
@@ -117,6 +124,16 @@ export const SearchResultsPage = () => {
       maxPrice: 1500
     });
     setSortBy('popularity');
+  };
+
+  const updateFilter = (updates) => {
+    setFilters(prev => ({ ...prev, ...updates }));
+    goToPage(1);
+  };
+  
+  const updateSort = (val) => {
+    setSortBy(val);
+    goToPage(1);
   };
 
   const getPageTitle = () => {
@@ -189,7 +206,7 @@ export const SearchResultsPage = () => {
             <div className="relative">
               <select 
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(e) => updateSort(e.target.value)}
                 className="appearance-none bg-surface-container-lowest text-on-surface font-label-md py-1.5 pl-3 pr-8 rounded-lg shadow-sm border border-outline-variant/30 focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
               >
                 <option value="popularity">জনপ্রিয়তা (Popularity)</option>
@@ -222,19 +239,19 @@ export const SearchResultsPage = () => {
               </h2>
               <div className="space-y-space-xs">
                 <label className="flex items-center gap-space-xs cursor-pointer text-body-sm text-on-surface">
-                  <input type="radio" name="rx_filter" checked={filters.type === 'all'} onChange={() => setFilters({...filters, type: 'all'})} className="w-4 h-4 text-primary accent-primary" />
+                  <input type="radio" name="rx_filter" checked={filters.type === 'all'} onChange={() => updateFilter({ type: 'all'})} className="w-4 h-4 text-primary accent-primary" />
                   <span>সকল ওষুধ (All)</span>
                 </label>
                 <label className="flex items-center justify-between cursor-pointer text-body-sm text-on-surface">
                   <span className="flex items-center gap-space-xs">
-                    <input type="radio" name="rx_filter" checked={filters.type === 'otc'} onChange={() => setFilters({...filters, type: 'otc'})} className="w-4 h-4 text-primary accent-primary" />
+                    <input type="radio" name="rx_filter" checked={filters.type === 'otc'} onChange={() => updateFilter({ type: 'otc'})} className="w-4 h-4 text-primary accent-primary" />
                     <span>OTC (প্রেসক্রিপশন ছাড়াই)</span>
                   </span>
                   <span className="text-[11px] bg-secondary-container text-on-secondary-container dark:bg-secondary/15 dark:text-secondary px-1.5 py-0.5 rounded font-bold">OTC</span>
                 </label>
                 <label className="flex items-center justify-between cursor-pointer text-body-sm text-on-surface">
                   <span className="flex items-center gap-space-xs">
-                    <input type="radio" name="rx_filter" checked={filters.type === 'rx'} onChange={() => setFilters({...filters, type: 'rx'})} className="w-4 h-4 text-primary accent-primary" />
+                    <input type="radio" name="rx_filter" checked={filters.type === 'rx'} onChange={() => updateFilter({ type: 'rx'})} className="w-4 h-4 text-primary accent-primary" />
                     <span>প্রেসক্রিপশন আবশ্যক (Rx)</span>
                   </span>
                   <span className="text-[11px] bg-tertiary-container/15 text-tertiary px-1.5 py-0.5 rounded font-bold">Rx</span>
@@ -246,19 +263,19 @@ export const SearchResultsPage = () => {
             <div className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm border border-outline-variant/30">
               <h2 className="font-headline-sm font-bold text-on-surface mb-space-sm">স্বাস্থ্য ক্যাটাগরি</h2>
               <div className="space-y-1 flex flex-col">
-                <button onClick={() => setFilters({...filters, category: 'all'})} className={`text-left px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.category === 'all' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
+                <button onClick={() => updateFilter({ category: 'all'})} className={`text-left px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.category === 'all' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
                   সকল ক্যাটাগরি
                 </button>
-                <button onClick={() => setFilters({...filters, category: 'gastric'})} className={`text-left flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.category === 'gastric' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
+                <button onClick={() => updateFilter({ category: 'gastric'})} className={`text-left flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.category === 'gastric' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
                   <span className="material-symbols-outlined text-[16px]">pill</span> গ্যাস্ট্রিক ও এসিডিটি
                 </button>
-                <button onClick={() => setFilters({...filters, category: 'diabetes'})} className={`text-left flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.category === 'diabetes' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
+                <button onClick={() => updateFilter({ category: 'diabetes'})} className={`text-left flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.category === 'diabetes' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
                   <span className="material-symbols-outlined text-[16px]">blood_pressure</span> ডায়াবেটিস
                 </button>
-                <button onClick={() => setFilters({...filters, category: 'cardiac'})} className={`text-left flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.category === 'cardiac' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
+                <button onClick={() => updateFilter({ category: 'cardiac'})} className={`text-left flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.category === 'cardiac' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
                   <span className="material-symbols-outlined text-[16px]">cardiology</span> কার্ডিওভাসকুলার
                 </button>
-                <button onClick={() => setFilters({...filters, category: 'fever'})} className={`text-left flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.category === 'fever' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
+                <button onClick={() => updateFilter({ category: 'fever'})} className={`text-left flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg font-label-md transition-colors ${filters.category === 'fever' ? 'bg-primary-container text-on-primary-container' : 'hover:bg-surface-container text-on-surface-variant'}`}>
                   <span className="material-symbols-outlined text-[16px]">thermostat</span> জ্বর ও ব্যথা
                 </button>
               </div>
@@ -286,7 +303,7 @@ export const SearchResultsPage = () => {
                 <input 
                   type="range" min="5" max="2000" 
                   value={filters.maxPrice} 
-                  onChange={(e) => setFilters({...filters, maxPrice: Number(e.target.value)})}
+                  onChange={(e) => updateFilter({ maxPrice: Number(e.target.value)})}
                   className="w-full h-1.5 bg-surface-container rounded-lg appearance-none cursor-pointer accent-primary" 
                 />
                 <div className="flex items-center justify-between gap-space-xs">
@@ -316,12 +333,22 @@ export const SearchResultsPage = () => {
                   <div key={n} className="h-80 bg-surface-container-low rounded-xl animate-pulse"></div>
                 ))}
               </div>
-            ) : filteredMedicines.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
-                {filteredMedicines.map(medicine => (
-                  <MedicineCard key={medicine.id} medicine={medicine} onAddToCart={addToCart} />
-                ))}
-              </div>
+            ) : paginatedItems.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
+                  {paginatedItems.map(medicine => (
+                    <MedicineCard key={medicine.id} medicine={medicine} onAddToCart={addToCart} />
+                  ))}
+                </div>
+                <Pagination 
+                  currentPage={currentPage} 
+                  totalPages={totalPages} 
+                  onPageChange={goToPage} 
+                  totalItems={totalItems} 
+                  pageSize={pageSize} 
+                  itemName="medicines"
+                />
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center py-space-2xl text-center bg-surface-container-lowest rounded-2xl border border-outline-variant/30">
                 <div className="w-20 h-20 rounded-full bg-surface-container-high flex items-center justify-center text-outline mb-4">
@@ -336,7 +363,7 @@ export const SearchResultsPage = () => {
             )}
             
             {/* Embedded Banner - Only show if we have products */}
-            {filteredMedicines.length > 0 && (
+            {paginatedItems.length > 0 && (
               <div className="mt-space-lg bg-gradient-to-r from-primary via-primary-container to-secondary rounded-2xl p-space-lg text-on-primary shadow-sm flex flex-col md:flex-row items-center justify-between gap-space-md">
                 <div className="flex items-center gap-space-md">
                   <div className="w-14 h-14 rounded-2xl bg-surface-container-lowest/15 backdrop-blur-md flex items-center justify-center shrink-0">

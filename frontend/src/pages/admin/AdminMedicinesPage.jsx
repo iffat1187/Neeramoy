@@ -4,6 +4,8 @@ import { Badge } from '../../components/common/Badge';
 import { medicineService } from '../../services/medicineService';
 import { useTheme } from '../../context/ThemeContext';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { usePagination } from '../../hooks/usePagination';
+import { Pagination } from '../../components/common/Pagination';
 
 export const AdminMedicinesPage = () => {
   const { isDarkMode } = useTheme();
@@ -65,7 +67,6 @@ export const AdminMedicinesPage = () => {
     { name: 'Out of Stock', value: outOfStock }
   ];
 
-  // Filtering
   const filteredMedicines = medicines.filter(m => {
     const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           (m.genericName && m.genericName.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -73,6 +74,23 @@ export const AdminMedicinesPage = () => {
     const matchesType = filterType === 'All' || (filterType === 'OTC' ? m.isOtc : !m.isOtc);
     return matchesSearch && matchesCategory && matchesType;
   });
+
+  const { currentPage, totalPages, totalItems, paginatedItems, goToPage, pageSize } = usePagination(filteredMedicines, 20);
+
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+    goToPage(1);
+  };
+
+  const handleFilterCat = (e) => {
+    setFilterCategory(e.target.value);
+    goToPage(1);
+  };
+
+  const handleFilterType = (e) => {
+    setFilterType(e.target.value);
+    goToPage(1);
+  };
 
   const toggleStatus = (id) => {
     setMedicines(medicines.map(m => m.id === id ? { ...m, active: !m.active } : m));
@@ -137,7 +155,7 @@ export const AdminMedicinesPage = () => {
               placeholder="Search medicines..." 
               className="bg-transparent border-none outline-none text-on-surface text-body-md w-full md:w-64"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearch}
             />
           </div>
           <button 
@@ -275,7 +293,7 @@ export const AdminMedicinesPage = () => {
             <select 
               className="bg-surface-container text-on-surface border border-outline-variant/30 rounded-lg px-3 py-1.5 font-body-sm focus:outline-none focus:border-primary"
               value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
+              onChange={handleFilterCat}
             >
               <option value="All">All Categories</option>
               {categories.map(c => <option key={c} value={c}>{c}</option>)}
@@ -284,7 +302,7 @@ export const AdminMedicinesPage = () => {
             <select 
               className="bg-surface-container text-on-surface border border-outline-variant/30 rounded-lg px-3 py-1.5 font-body-sm focus:outline-none focus:border-primary"
               value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
+              onChange={handleFilterType}
             >
               <option value="All">All Types (Rx/OTC)</option>
               <option value="Rx">Prescription (Rx)</option>
@@ -315,7 +333,7 @@ export const AdminMedicinesPage = () => {
                 </tr>
               </thead>
               <tbody className="align-middle">
-                {filteredMedicines.map(med => (
+                {paginatedItems.map(med => (
                   <tr key={med.id} className="border-b border-outline-variant/20 hover:bg-surface-container-low/50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
@@ -378,6 +396,18 @@ export const AdminMedicinesPage = () => {
             </table>
           )}
         </div>
+        {paginatedItems.length > 0 && (
+          <div className="px-space-md pb-space-md">
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={goToPage} 
+              totalItems={totalItems} 
+              pageSize={pageSize} 
+              itemName="medicines"
+            />
+          </div>
+        )}
       </Card>
 
       {/* Add/Edit Modal */}

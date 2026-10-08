@@ -4,6 +4,8 @@ import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { useTheme } from '../../context/ThemeContext';
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { usePagination } from '../../hooks/usePagination';
+import { Pagination } from '../../components/common/Pagination';
 
 export const AdminInventoryPage = () => {
   const { inventory, activityHistory, updateStock } = useInventory();
@@ -54,6 +56,25 @@ export const AdminInventoryPage = () => {
     const matchesType = filterType === 'All' || (filterType === 'OTC' ? m.isOtc : !m.isOtc);
     return matchesSearch && matchesCategory && matchesStatus && matchesType;
   });
+
+  const { currentPage, totalPages, totalItems, paginatedItems, goToPage, pageSize } = usePagination(filteredInventory, 20);
+
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+    goToPage(1);
+  };
+  const handleFilterCat = (e) => {
+    setFilterCategory(e.target.value);
+    goToPage(1);
+  };
+  const handleFilterStatus = (e) => {
+    setFilterStatus(e.target.value);
+    goToPage(1);
+  };
+  const handleFilterType = (e) => {
+    setFilterType(e.target.value);
+    goToPage(1);
+  };
 
   const needsAttention = inventory.filter(m => m.status !== 'In Stock').sort((a, b) => a.stock - b.stock);
 
@@ -115,7 +136,7 @@ export const AdminInventoryPage = () => {
               placeholder="Search by SKU or name..." 
               className="bg-transparent border-none outline-none text-on-surface text-body-md w-full md:w-64"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearch}
             />
           </div>
           <button onClick={() => openModal(null, 'addStock')} className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md font-bold hover:bg-primary/90 transition-colors shrink-0">
@@ -242,17 +263,17 @@ export const AdminInventoryPage = () => {
           </div>
           
           <div className="flex flex-wrap items-center gap-space-sm">
-            <select className="bg-surface-container text-on-surface border border-outline-variant/30 rounded-lg px-3 py-1.5 font-body-sm focus:outline-none focus:border-primary" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+            <select className="bg-surface-container text-on-surface border border-outline-variant/30 rounded-lg px-3 py-1.5 font-body-sm focus:outline-none focus:border-primary" value={filterCategory} onChange={handleFilterCat}>
               <option value="All">All Categories</option>
               {categories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
-            <select className="bg-surface-container text-on-surface border border-outline-variant/30 rounded-lg px-3 py-1.5 font-body-sm focus:outline-none focus:border-primary" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+            <select className="bg-surface-container text-on-surface border border-outline-variant/30 rounded-lg px-3 py-1.5 font-body-sm focus:outline-none focus:border-primary" value={filterStatus} onChange={handleFilterStatus}>
               <option value="All">All Statuses</option>
               <option value="In Stock">In Stock</option>
               <option value="Low Stock">Low Stock</option>
               <option value="Out of Stock">Out of Stock</option>
             </select>
-            <select className="bg-surface-container text-on-surface border border-outline-variant/30 rounded-lg px-3 py-1.5 font-body-sm focus:outline-none focus:border-primary" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+            <select className="bg-surface-container text-on-surface border border-outline-variant/30 rounded-lg px-3 py-1.5 font-body-sm focus:outline-none focus:border-primary" value={filterType} onChange={handleFilterType}>
               <option value="All">All Types (Rx/OTC)</option>
               <option value="Rx">Rx</option>
               <option value="OTC">OTC</option>
@@ -276,7 +297,7 @@ export const AdminInventoryPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredInventory.map(med => (
+                {paginatedItems.map(med => (
                   <tr key={med.id} className="border-b border-outline-variant/20 hover:bg-surface-container-low/50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
@@ -317,6 +338,18 @@ export const AdminInventoryPage = () => {
             </table>
           )}
         </div>
+        {paginatedItems.length > 0 && (
+          <div className="px-space-md pb-space-md">
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={goToPage} 
+              totalItems={totalItems} 
+              pageSize={pageSize} 
+              itemName="items"
+            />
+          </div>
+        )}
       </Card>
 
       {/* Recent Activity */}

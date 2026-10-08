@@ -3,6 +3,8 @@ import { useOrder } from '../../context/OrderContext';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Link } from 'react-router-dom';
+import { usePagination } from '../../hooks/usePagination';
+import { Pagination } from '../../components/common/Pagination';
 
 export const AdminOrdersPage = () => {
   const { orders } = useOrder();
@@ -18,6 +20,21 @@ export const AdminOrdersPage = () => {
     const matchPayment = filterPayment === 'All' || o.paymentMethod === filterPayment;
     return matchSearch && matchStatus && matchPayment;
   }).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const { currentPage, totalPages, totalItems, paginatedItems, goToPage, pageSize } = usePagination(filteredOrders, 20);
+
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+    goToPage(1);
+  };
+  const handleFilterStatus = (s) => {
+    setFilterStatus(s);
+    goToPage(1);
+  };
+  const handleFilterPayment = (e) => {
+    setFilterPayment(e.target.value);
+    goToPage(1);
+  };
 
   const getStatusBadge = (status) => {
     switch(status) {
@@ -44,7 +61,7 @@ export const AdminOrdersPage = () => {
         {['All', 'Pending', 'Confirmed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].map(s => (
           <button 
             key={s}
-            onClick={() => setFilterStatus(s)}
+            onClick={() => handleFilterStatus(s)}
             className={`px-4 py-2 rounded-full text-label-sm font-bold whitespace-nowrap transition-colors ${filterStatus === s ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface'}`}
           >
             {s} <span className="opacity-80 ml-1">{s === 'All' ? orders.length : orders.filter(o => o.status === s).length}</span>
@@ -60,13 +77,13 @@ export const AdminOrdersPage = () => {
             placeholder="Search by Order ID, Customer Name or Phone..." 
             className="w-full pl-10 pr-4 py-2 rounded-xl border border-outline-variant/50 bg-surface-container-lowest focus:outline-none focus:border-primary text-body-sm text-on-surface"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearch}
           />
         </div>
         <select 
           className="border border-outline-variant/50 rounded-xl px-3 py-2 bg-surface-container-lowest text-body-sm text-on-surface focus:outline-none focus:border-primary"
           value={filterPayment}
-          onChange={(e) => setFilterPayment(e.target.value)}
+          onChange={handleFilterPayment}
         >
           <option value="All">All Payment Methods</option>
           <option value="bKash">bKash</option>
@@ -87,7 +104,7 @@ export const AdminOrdersPage = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredOrders.map(order => (
+            {paginatedItems.map(order => (
               <tr key={order.id} className="border-b border-outline-variant/20 hover:bg-surface-container transition-colors">
                 <td className="p-4">
                   <div className="font-bold text-on-surface">{order.id}</div>
@@ -114,6 +131,18 @@ export const AdminOrdersPage = () => {
             )}
           </tbody>
         </table>
+        {paginatedItems.length > 0 && (
+          <div className="px-space-md pb-space-md">
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={goToPage} 
+              totalItems={totalItems} 
+              pageSize={pageSize} 
+              itemName="orders"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

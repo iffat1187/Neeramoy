@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { usePrescription } from '../../context/PrescriptionContext';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
+import { usePagination } from '../../hooks/usePagination';
+import { Pagination } from '../../components/common/Pagination';
 
 export const AdminPrescriptionsPage = () => {
   const { prescriptions, updatePrescriptionStatus } = usePrescription();
@@ -21,6 +23,17 @@ export const AdminPrescriptionsPage = () => {
     const matchStatus = filterStatus === 'All' || (filterStatus === 'Pending' && rx.status === 'Pending') || (filterStatus === 'Reviewed' && rx.status !== 'Pending') || rx.status === filterStatus;
     return matchSearch && matchStatus;
   }).sort((a,b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+
+  const { currentPage, totalPages, totalItems, paginatedItems, goToPage, pageSize } = usePagination(filteredPrescriptions, 20);
+
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+    goToPage(1);
+  };
+  const handleFilterStatus = (s) => {
+    setFilterStatus(s);
+    goToPage(1);
+  };
 
   const handleApprove = () => {
     updatePrescriptionStatus(selectedRx.id, 'Approved');
@@ -82,7 +95,7 @@ export const AdminPrescriptionsPage = () => {
         {['All', 'Pending', 'Approved', 'Rejected'].map(s => (
           <button 
             key={s}
-            onClick={() => setFilterStatus(s)}
+            onClick={() => handleFilterStatus(s)}
             className={`px-4 py-2 rounded-full text-label-sm font-bold whitespace-nowrap transition-colors ${filterStatus === s ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface'}`}
           >
             {s} <span className="opacity-80 ml-1">{s === 'All' ? prescriptions.length : prescriptions.filter(p => p.status === s).length}</span>
@@ -98,7 +111,7 @@ export const AdminPrescriptionsPage = () => {
             placeholder="Search by Rx ID, Customer Name, or Phone..." 
             className="w-full pl-10 pr-4 py-2 rounded-xl border border-outline-variant/50 bg-surface-container-lowest focus:outline-none focus:border-primary text-body-sm text-on-surface"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearch}
           />
         </div>
       </div>
@@ -116,7 +129,7 @@ export const AdminPrescriptionsPage = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredPrescriptions.map(rx => (
+            {paginatedItems.map(rx => (
               <tr key={rx.id} className="border-b border-outline-variant/20 hover:bg-surface-container transition-colors text-body-sm">
                 <td className="p-4">
                   <div className="font-bold text-on-surface">{rx.id}</div>
@@ -162,6 +175,18 @@ export const AdminPrescriptionsPage = () => {
             )}
           </tbody>
         </table>
+        {paginatedItems.length > 0 && (
+          <div className="px-space-md pb-space-md">
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={goToPage} 
+              totalItems={totalItems} 
+              pageSize={pageSize} 
+              itemName="prescriptions"
+            />
+          </div>
+        )}
       </div>
 
       {/* Review Drawer Modal */}

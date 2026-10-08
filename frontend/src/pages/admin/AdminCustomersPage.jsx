@@ -4,6 +4,8 @@ import { Badge } from '../../components/common/Badge';
 import { useTheme } from '../../context/ThemeContext';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { MOCK_CUSTOMERS } from '../../mockData/customers';
+import { usePagination } from '../../hooks/usePagination';
+import { Pagination } from '../../components/common/Pagination';
 
 export const AdminCustomersPage = () => {
   const { isDarkMode } = useTheme();
@@ -100,6 +102,29 @@ export const AdminCustomersPage = () => {
     // Default Newest
     return new Date(b.registrationDate) - new Date(a.registrationDate);
   });
+
+  const { currentPage, totalPages, totalItems, paginatedItems, goToPage, pageSize } = usePagination(filtered, 20);
+
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+    goToPage(1);
+  };
+  const handleFilterStatus = (e) => {
+    setFilterStatus(e.target.value);
+    goToPage(1);
+  };
+  const handleFilterOrder = (e) => {
+    setFilterOrderActivity(e.target.value);
+    goToPage(1);
+  };
+  const handleSortBy = (e) => {
+    setSortBy(e.target.value);
+    goToPage(1);
+  };
+  const handleClearFilters = () => {
+    clearFilters();
+    goToPage(1);
+  };
 
   if (loading) return <div className="p-space-lg text-on-surface">Loading customers...</div>;
 
@@ -212,28 +237,28 @@ export const AdminCustomersPage = () => {
                 placeholder="Search by name, email, or phone..." 
                 className="bg-transparent border-none outline-none text-on-surface text-body-md w-full"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleSearch}
               />
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-space-sm">
-            <select className="bg-surface-container text-on-surface border border-outline-variant/30 rounded-lg px-3 py-1.5 font-body-sm focus:outline-none focus:border-primary" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+            <select className="bg-surface-container text-on-surface border border-outline-variant/30 rounded-lg px-3 py-1.5 font-body-sm focus:outline-none focus:border-primary" value={filterStatus} onChange={handleFilterStatus}>
               <option value="All">All Statuses</option>
               <option value="Active">Active</option>
               <option value="Inactive">Inactive</option>
             </select>
-            <select className="bg-surface-container text-on-surface border border-outline-variant/30 rounded-lg px-3 py-1.5 font-body-sm focus:outline-none focus:border-primary" value={filterOrderActivity} onChange={(e) => setFilterOrderActivity(e.target.value)}>
+            <select className="bg-surface-container text-on-surface border border-outline-variant/30 rounded-lg px-3 py-1.5 font-body-sm focus:outline-none focus:border-primary" value={filterOrderActivity} onChange={handleFilterOrder}>
               <option value="All">All Order Activity</option>
               <option value="Has Orders">Has Orders</option>
               <option value="No Orders">No Orders</option>
             </select>
-            <select className="bg-surface-container text-on-surface border border-outline-variant/30 rounded-lg px-3 py-1.5 font-body-sm focus:outline-none focus:border-primary" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <select className="bg-surface-container text-on-surface border border-outline-variant/30 rounded-lg px-3 py-1.5 font-body-sm focus:outline-none focus:border-primary" value={sortBy} onChange={handleSortBy}>
               <option value="Newest">Sort: Newest</option>
               <option value="Name">Sort: Name</option>
               <option value="Total Orders">Sort: Total Orders</option>
               <option value="Total Spent">Sort: Total Spent</option>
             </select>
-            <button onClick={clearFilters} className="text-on-surface-variant hover:text-primary text-[11px] font-bold underline px-2">Clear</button>
+            <button onClick={handleClearFilters} className="text-on-surface-variant hover:text-primary text-[11px] font-bold underline px-2">Clear</button>
           </div>
         </div>
 
@@ -259,7 +284,7 @@ export const AdminCustomersPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(c => {
+                {paginatedItems.map(c => {
                   const spent = c.orders.reduce((sum, o) => sum + o.total, 0);
                   const lastOrder = c.orders.length > 0 ? c.orders.sort((a,b) => new Date(b.date) - new Date(a.date))[0].date : 'Never';
                   return (
@@ -300,6 +325,18 @@ export const AdminCustomersPage = () => {
             </table>
           )}
         </div>
+        {paginatedItems.length > 0 && (
+          <div className="px-space-md pb-space-md">
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={goToPage} 
+              totalItems={totalItems} 
+              pageSize={pageSize} 
+              itemName="customers"
+            />
+          </div>
+        )}
       </Card>
 
       {/* Customer Details Drawer / Modal */}
