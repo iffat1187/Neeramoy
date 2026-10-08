@@ -7,8 +7,9 @@ import { medicineService } from '../services/medicineService';
 
 export const SearchResultsPage = () => {
   const { id: categoryId } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
+  const urlManufacturer = searchParams.get('manufacturer');
   const navigate = useNavigate();
   const { addToCart } = useCart();
   
@@ -19,10 +20,28 @@ export const SearchResultsPage = () => {
   const [filters, setFilters] = useState({
     type: 'all',
     category: categoryId || 'all',
-    manufacturer: 'all',
+    manufacturer: urlManufacturer,
     maxPrice: 1500
   });
   const [sortBy, setSortBy] = useState('popularity');
+
+  useEffect(() => {
+    setFilters(prev => ({
+      ...prev,
+      manufacturer: searchParams.get('manufacturer')
+    }));
+  }, [searchParams]);
+
+  const handleManufacturerChange = (mfg) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (!mfg) {
+      newParams.delete('manufacturer');
+    } else {
+      newParams.set('manufacturer', mfg);
+    }
+    setSearchParams(newParams);
+    setFilters(prev => ({ ...prev, manufacturer: mfg }));
+  };
 
   useEffect(() => {
     // Scroll to top on load
@@ -70,7 +89,7 @@ export const SearchResultsPage = () => {
     }
 
     // Manufacturer Filter
-    if (currentFilters.manufacturer !== 'all') {
+    if (currentFilters.manufacturer) {
       filtered = filtered.filter(m => m.manufacturer === currentFilters.manufacturer);
     }
     
@@ -87,10 +106,14 @@ export const SearchResultsPage = () => {
   };
 
   const clearFilters = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('manufacturer');
+    setSearchParams(newParams);
+
     setFilters({
       type: 'all',
       category: categoryId || 'all',
-      manufacturer: 'all',
+      manufacturer: null,
       maxPrice: 1500
     });
     setSortBy('popularity');
@@ -101,6 +124,8 @@ export const SearchResultsPage = () => {
     if (categoryId) return `Category: ${categoryId.charAt(0).toUpperCase() + categoryId.slice(1)}`;
     return 'All Medicines';
   };
+
+  const uniqueManufacturers = [null, 'Beximco Pharmaceuticals', 'Square Pharmaceuticals', 'The ACME Laboratories', 'ACI Limited', 'Roche Diabetes Care'];
 
   return (
     <div className="w-full bg-background min-h-screen">
@@ -152,7 +177,7 @@ export const SearchResultsPage = () => {
             <Button variant="outline" className="md:hidden py-1 px-3 text-body-sm" onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}>
               <span className="material-symbols-outlined text-[18px]">tune</span> ফিল্টার
             </Button>
-            {(filters.type !== 'all' || filters.manufacturer !== 'all' || filters.maxPrice < 1500) && (
+            {(filters.type !== 'all' || filters.manufacturer || filters.maxPrice < 1500) && (
               <button onClick={clearFilters} className="text-primary font-label-sm hover:underline ml-space-xs">
                 সব ফিল্টার মুছুন
               </button>
@@ -245,10 +270,10 @@ export const SearchResultsPage = () => {
                 <h2 className="font-headline-sm font-bold text-on-surface">উৎপাদক কোম্পানি</h2>
               </div>
               <div className="space-y-space-xs">
-                {['all', 'Square Pharmaceuticals', 'Beximco Pharmaceuticals', 'Incepta Pharmaceuticals', 'The ACME Laboratories', 'Opsonin Pharma'].map(mfg => (
-                  <label key={mfg} className="flex items-center gap-space-xs text-body-sm text-on-surface cursor-pointer hover:text-primary">
-                    <input type="radio" name="mfg_filter" checked={filters.manufacturer === mfg} onChange={() => setFilters({...filters, manufacturer: mfg})} className="w-4 h-4 text-primary accent-primary" />
-                    <span>{mfg === 'all' ? 'All Manufacturers' : mfg}</span>
+                {uniqueManufacturers.map(mfg => (
+                  <label key={mfg || 'all'} className="flex items-center gap-space-xs text-body-sm text-on-surface cursor-pointer hover:text-primary">
+                    <input type="radio" name="mfg_filter" value={mfg || ''} checked={filters.manufacturer === mfg} onChange={() => handleManufacturerChange(mfg)} className="w-4 h-4 text-primary accent-primary" />
+                    <span>{mfg === null ? 'All Manufacturers' : mfg}</span>
                   </label>
                 ))}
               </div>
