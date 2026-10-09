@@ -1,13 +1,13 @@
-package com.seu.backend;
+package com.neeramoy;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class NeeramoyBackendApplication {
+public class NeeramoyApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(NeeramoyBackendApplication.class, args);
+        SpringApplication.run(NeeramoyApplication.class, args);
     }
 
 }

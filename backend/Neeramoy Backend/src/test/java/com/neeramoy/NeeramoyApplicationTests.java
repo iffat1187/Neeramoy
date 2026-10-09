@@ -1,10 +1,10 @@
-package com.seu.backend;
+package com.neeramoy;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class NeeramoyBackendApplicationTests {
+class NeeramoyApplicationTests {
 
     @Test
     void contextLoads() {
