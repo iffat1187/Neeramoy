@@ -49,7 +49,7 @@ export const OrderConfirmationPage = () => {
           <div className="inline-block bg-primary-container-dark/20 border border-primary-container/30 px-space-xl py-space-sm rounded-xl">
             <p className="text-[12px] uppercase tracking-wider text-primary-container mb-1">Order Number</p>
             <p className="font-headline-md font-bold">{orderDetails.orderId}</p>
-            <p className="text-body-sm text-primary-container mt-1">{formatDate(orderDetails.date)}</p>
+            <p className="text-body-sm text-primary-container mt-1">{formatDate(orderDetails.createdAt || orderDetails.date)}</p>
           </div>
         </div>
       </div>
@@ -70,9 +70,9 @@ export const OrderConfirmationPage = () => {
               <div className="p-space-lg grid grid-cols-1 md:grid-cols-2 gap-space-lg">
                 <div>
                   <p className="text-[11px] text-outline uppercase tracking-wider mb-1">Customer</p>
-                  <p className="font-label-md font-bold text-on-surface mb-0.5">{orderDetails.customerDetails.name}</p>
-                  <p className="font-body-sm text-on-surface-variant">{orderDetails.customerDetails.phone}</p>
-                  {orderDetails.customerDetails.email && <p className="font-body-sm text-on-surface-variant">{orderDetails.customerDetails.email}</p>}
+                  <p className="font-label-md font-bold text-on-surface mb-0.5">{orderDetails.deliveryDetails.fullName}</p>
+                  <p className="font-body-sm text-on-surface-variant">{orderDetails.deliveryDetails.phone}</p>
+                  {orderDetails.deliveryDetails.email && <p className="font-body-sm text-on-surface-variant">{orderDetails.deliveryDetails.email}</p>}
                 </div>
                 <div>
                   <p className="text-[11px] text-outline uppercase tracking-wider mb-1">Delivery Method</p>
@@ -104,14 +104,13 @@ export const OrderConfirmationPage = () => {
               <div className="p-space-lg">
                 <div className="divide-y divide-outline-variant/20">
                   {orderDetails.items.map((item) => (
-                    <div key={item.id} className="py-space-md first:pt-0 last:pb-0 flex items-center justify-between gap-4">
+                    <div key={item.medicineId || item.id} className="py-space-md first:pt-0 last:pb-0 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-space-md min-w-0">
                         <div className="w-16 h-16 bg-surface-container-low rounded-lg p-1 shrink-0">
                           <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
                         </div>
                         <div className="min-w-0">
                           <h4 className="font-label-md font-bold text-on-surface truncate">{item.name}</h4>
-                          <p className="text-[11px] text-on-surface-variant truncate">{item.genericName}</p>
                           <p className="text-body-sm text-outline mt-1">Qty: {item.quantity} × ৳ {item.price}</p>
                         </div>
                       </div>
@@ -143,7 +142,7 @@ export const OrderConfirmationPage = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-[11px] text-outline uppercase tracking-wider mb-1">Status</p>
-                    <span className="inline-block bg-secondary-container/40 text-secondary-fixed-dim px-2 py-0.5 rounded font-bold text-[12px]">Pending</span>
+                    <span className="inline-block bg-secondary-container/40 text-secondary-fixed-dim px-2 py-0.5 rounded font-bold text-[12px] capitalize">{orderDetails.paymentStatus}</span>
                   </div>
                 </div>
 

@@ -26,15 +26,15 @@ export const LoginPage = () => {
     }
   }, [isLoggedIn, user, navigate, from]);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) {
       setError('Please enter both email and password.');
       return;
     }
     
-    // Mock Auth logic
-    if (!login(email, password)) {
+    const success = await login(email, password);
+    if (!success) {
       setError('Invalid email or password.');
     }
   };

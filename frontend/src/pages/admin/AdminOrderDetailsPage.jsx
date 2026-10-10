@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useOrder } from '../../context/OrderContext';
+import { orderService } from '../../services/orderService';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { MOCK_MEDICINES } from '../../mockData/medicines';
@@ -8,7 +8,10 @@ import { MOCK_MEDICINES } from '../../mockData/medicines';
 export const AdminOrderDetailsPage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { getOrder, updateOrderStatus } = useOrder();
+  
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   
   const [successMsg, setSuccessMsg] = useState('');
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
@@ -18,9 +21,27 @@ export const AdminOrderDetailsPage = () => {
   const [cancelReason, setCancelReason] = useState('Customer requested');
   const [customReason, setCustomReason] = useState('');
 
-  const order = getOrder(orderId);
+  useEffect(() => {
+    fetchOrder();
+  }, [orderId]);
 
-  if (!order) {
+  const fetchOrder = async () => {
+    try {
+      setLoading(true);
+      const data = await orderService.getAdminOrderById(orderId);
+      setOrder(data);
+    } catch (err) {
+      setError(err.message || 'Failed to load order');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="p-8 text-center">Loading order details...</div>;
+  }
+
+  if (error || !order) {
     return (
       <div className="p-space-lg flex flex-col items-center justify-center min-h-[50vh]">
         <span className="material-symbols-outlined text-[48px] text-error mb-4">error</span>
@@ -35,29 +56,44 @@ export const AdminOrderDetailsPage = () => {
     );
   }
 
-  const handleStatusChange = (newStatus) => {
-    updateOrderStatus(order.id, newStatus);
+  const handleStatusChange = async (newStatus) => {
+    try {
+      await orderService.updateOrderStatusByAdmin(order.id, newStatus);
+      setSuccessMsg(`Order status updated to ${newStatus}`);
+      fetchOrder();
+    } catch (err) {
+      alert(err.message || 'Failed to update status');
+    }
     setStatusMenuOpen(false);
-    setSuccessMsg(`Order status updated to ${newStatus}`);
     setTimeout(() => setSuccessMsg(''), 4000);
   };
 
-  const handleApproveOrder = () => {
-    updateOrderStatus(order.id, 'Confirmed');
-    setApproveModalOpen(false);
-    setSuccessMsg('Order approved successfully.');
+  const handleApproveOrder = async () => {
+    try {
+      await orderService.updateOrderStatusByAdmin(order.id, 'Confirmed');
+      setApproveModalOpen(false);
+      setSuccessMsg('Order approved successfully.');
+      fetchOrder();
+    } catch (err) {
+      alert(err.message || 'Failed to approve order');
+    }
     setTimeout(() => setSuccessMsg(''), 4000);
   };
 
-  const handleCancelOrder = () => {
+  const handleCancelOrder = async () => {
     const finalReason = cancelReason === 'Other' ? customReason : cancelReason;
     if (!finalReason.trim()) {
       alert("Please provide a cancellation reason.");
       return;
     }
-    updateOrderStatus(order.id, 'Cancelled', finalReason);
-    setCancelModalOpen(false);
-    setSuccessMsg('Order cancelled successfully.');
+    try {
+      await orderService.updateOrderStatusByAdmin(order.id, 'Cancelled');
+      setCancelModalOpen(false);
+      setSuccessMsg('Order cancelled successfully.');
+      fetchOrder();
+    } catch (err) {
+      alert(err.message || 'Failed to cancel order');
+    }
     setCancelReason('Customer requested');
     setCustomReason('');
     setTimeout(() => setSuccessMsg(''), 4000);
@@ -166,8 +202,8 @@ export const AdminOrderDetailsPage = () => {
             <h3 className="font-label-md font-bold text-on-surface flex items-center gap-2 border-b border-outline-variant/20 pb-2">
               <span className="material-symbols-outlined text-[18px]">person</span> Customer Details
             </h3>
-            <span className="text-body-md text-on-surface font-semibold">{order.customer?.name || 'Guest User'}</span>
-            <span className="text-body-sm text-on-surface-variant">{order.customer?.phone || 'No phone provided'}</span>
+            <span className="text-body-md text-on-surface font-semibold">{order.deliveryDetails?.fullName || order.customer?.name || 'Guest User'}</span>
+            <span className="text-body-sm text-on-surface-variant">{order.deliveryDetails?.phone || order.customer?.phone || 'No phone provided'}</span>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -175,7 +211,7 @@ export const AdminOrderDetailsPage = () => {
               <span className="material-symbols-outlined text-[18px]">local_shipping</span> Delivery Address
             </h3>
             <p className="text-body-sm text-on-surface-variant">
-              {order.customer?.address || 'No address provided'}
+              {order.deliveryDetails?.address || order.customer?.address || 'No address provided'}
             </p>
             <span className="mt-1 text-label-sm font-bold text-primary px-2 py-1 bg-primary/10 rounded inline-block w-max">
               {order.deliveryMethod || 'Standard Delivery'}

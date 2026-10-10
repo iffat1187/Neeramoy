@@ -1,66 +1,60 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { apiClient } from '../services/apiClient';
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  // Mock auth state
   const [user, setUser] = useState(null);
-
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = (email, password) => {
-    // Mock login logic
-    if (email && password) {
-      if (email === 'admin@neeramoy.com') {
-        setUser({
-          name: 'Neeramoy Admin',
-          email: email,
-          phone: '01911223344',
-          role: 'ADMIN'
-        });
-      } else {
-        setUser({
-          name: 'Hasan Mahmud',
-          email: email,
-          phone: '01711223344',
-          role: 'CUSTOMER',
-          addresses: [
-            {
-              id: '1',
-              name: 'Hasan Mahmud',
-              phone: '01711223344',
-              address: 'House 42, Road 7/A',
-              city: 'Dhaka',
-              area: 'Dhanmondi',
-              postalCode: '1209',
-              isDefault: true
-            }
-          ],
-          address: 'House 42, Road 7/A',
-          city: 'Dhaka',
-          area: 'Dhanmondi',
-          postalCode: '1209'
-        });
+  useEffect(() => {
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const userData = await apiClient.get('/auth/me');
+          setUser(userData);
+        } catch (e) {
+          localStorage.removeItem('token');
+        }
       }
-      return true;
+      setIsLoading(false);
+    };
+    initAuth();
+  }, []);
+
+  const login = async (email, password) => {
+    try {
+      const response = await apiClient.post('/auth/login', { email, password });
+      if (response && response.token) {
+        localStorage.setItem('token', response.token);
+        setUser(response.user);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error(e);
+      return false;
     }
-    return false;
   };
 
-  const register = (userData) => {
-    // Mock register logic
-    setUser({
-      name: userData.fullName,
-      email: userData.email,
-      phone: userData.phone
-    });
-    return true;
+  const register = async (userData) => {
+    try {
+      await apiClient.post('/auth/register', userData);
+      // Auto login after register
+      return await login(userData.email || userData.phone, userData.password);
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
   };
 
   const logout = () => {
     setIsLoggingOut(true);
+    localStorage.removeItem('token');
     setUser(null);
     setTimeout(() => setIsLoggingOut(false), 100);
   };
@@ -68,6 +62,10 @@ export const AuthProvider = ({ children }) => {
   const updateUser = (newDetails) => {
     setUser(prev => ({ ...prev, ...newDetails }));
   };
+
+  if (isLoading) {
+    return null; // Or a loading spinner
+  }
 
   return (
     <AuthContext.Provider value={{

@@ -31,7 +31,7 @@ export const RegisterPage = () => {
     setError('');
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     
     if (!formData.fullName || !formData.phone || !formData.password || !formData.confirmPassword) {
@@ -44,9 +44,11 @@ export const RegisterPage = () => {
       return;
     }
     
-    // Mock Auth logic
-    if (register(formData)) {
+    const success = await register(formData);
+    if (success) {
       navigate(from, { replace: true });
+    } else {
+      setError('Registration failed. Please try again.');
     }
   };
 

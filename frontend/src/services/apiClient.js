@@ -9,7 +9,9 @@ export const apiClient = {
     };
 
     const token = localStorage.getItem('token');
-    if (token) {
+    const isPublicAuthEndpoint = endpoint.includes('/auth/login') || endpoint.includes('/auth/register');
+    
+    if (token && !isPublicAuthEndpoint) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 

@@ -1,15 +1,32 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useOrder } from '../context/OrderContext';
+import { orderService } from '../services/orderService';
 import { Button } from '../components/common/Button';
 
 export const OrdersPage = () => {
   const navigate = useNavigate();
-  const { orders } = useOrder();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    fetchOrders();
   }, []);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const data = await orderService.getMyOrders();
+      // Sort orders descending by createdAt
+      data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setOrders(data);
+    } catch (err) {
+      setError(err.message || 'Failed to load orders');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -40,7 +57,15 @@ export const OrdersPage = () => {
         </span>
       </div>
 
-      {orders.length === 0 ? (
+      {loading && <p className="text-center py-8">Loading your orders...</p>}
+      {error && (
+         <div className="bg-error/10 border border-error/20 text-error p-4 rounded-xl flex items-center gap-2 mt-4">
+            <span className="material-symbols-outlined">error</span>
+            <p className="font-body-md font-medium">{error}</p>
+         </div>
+      )}
+
+      {!loading && !error && orders.length === 0 ? (
         <div className="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 p-space-2xl text-center mt-6">
           <div className="w-20 h-20 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-space-md">
             <span className="material-symbols-outlined text-[40px] text-outline">receipt_long</span>
@@ -49,7 +74,7 @@ export const OrdersPage = () => {
           <p className="font-body-md text-on-surface-variant mb-space-lg">Looks like you haven't made any purchases yet.</p>
           <Button onClick={() => navigate('/')}>Start Shopping</Button>
         </div>
-      ) : (
+      ) : !loading && !error ? (
         <div className="space-y-space-md mt-6">
           {orders.map(order => (
             <div key={order.orderId || order.id} className="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden flex flex-col md:flex-row md:items-stretch">
@@ -109,7 +134,7 @@ export const OrdersPage = () => {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

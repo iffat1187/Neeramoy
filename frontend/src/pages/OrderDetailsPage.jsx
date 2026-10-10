@@ -1,27 +1,60 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useOrder } from '../context/OrderContext';
+import { orderService } from '../services/orderService';
 import { Button } from '../components/common/Button';
 
 export const OrderDetailsPage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { getOrder, updateOrderStatus } = useOrder();
-
-  const order = getOrder(orderId);
+  
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+    fetchOrder();
+  }, [orderId]);
 
-  if (!order) {
+  const fetchOrder = async () => {
+    try {
+      setLoading(true);
+      const data = await orderService.getOrderById(orderId);
+      setOrder(data);
+    } catch (err) {
+      setError(err.message || 'Failed to load order');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+     return <div className="p-8 text-center">Loading order details...</div>;
+  }
+
+  if (error || !order) {
     return (
       <div className="w-full bg-surface-container-lowest rounded-2xl p-space-2xl flex flex-col items-center justify-center border border-outline-variant/30">
-        <h2 className="font-headline-md text-on-surface mb-4">Order Not Found</h2>
+        <h2 className="font-headline-md text-on-surface mb-4">{error || 'Order Not Found'}</h2>
         <Button onClick={() => navigate('/orders')}>Back to Orders</Button>
       </div>
     );
   }
+
+  const handleCancelOrder = async () => {
+     if (window.confirm("Are you sure you want to cancel this order?")) {
+        try {
+           setCancelling(true);
+           const updated = await orderService.cancelOrder(order.id);
+           setOrder(updated);
+        } catch (err) {
+           alert(err.message || 'Failed to cancel order');
+        } finally {
+           setCancelling(false);
+        }
+     }
+  };
 
   const formatPaymentMethod = (method) => {
     if (method === 'cod') return 'Cash on Delivery';
@@ -74,8 +107,8 @@ export const OrderDetailsPage = () => {
             <div className="p-space-lg grid grid-cols-1 md:grid-cols-2 gap-space-lg">
               <div>
                 <p className="text-[11px] text-outline uppercase tracking-wider mb-1">Customer</p>
-                <p className="font-label-md font-bold text-on-surface mb-0.5">{order.customer?.name || order.customerDetails?.name}</p>
-                <p className="font-body-sm text-on-surface-variant">{order.customer?.phone || order.customerDetails?.phone}</p>
+                <p className="font-label-md font-bold text-on-surface mb-0.5">{order.deliveryDetails?.fullName}</p>
+                <p className="font-body-sm text-on-surface-variant">{order.deliveryDetails?.phone}</p>
               </div>
               <div>
                 <p className="text-[11px] text-outline uppercase tracking-wider mb-1">Delivery Method</p>
@@ -84,7 +117,7 @@ export const OrderDetailsPage = () => {
               <div className="md:col-span-2">
                 <p className="text-[11px] text-outline uppercase tracking-wider mb-1">Delivery Address</p>
                 <p className="font-body-md text-on-surface">
-                  {order.customer?.address || order.deliveryDetails?.address}
+                  {order.deliveryDetails?.address}, {order.deliveryDetails?.area}, {order.deliveryDetails?.city} {order.deliveryDetails?.postalCode}
                 </p>
               </div>
             </div>
@@ -168,11 +201,9 @@ export const OrderDetailsPage = () => {
           {(order.status === 'Pending' || order.status === 'Confirmed' || order.status === 'Processing') && (
              <div className="bg-error-container/10 rounded-2xl border border-error/20 p-space-lg text-center">
                 <p className="text-body-sm text-on-surface-variant mb-4">Need to cancel this order? You can only cancel before it is shipped.</p>
-                <Button variant="outline" className="w-full text-error border-error hover:bg-error-container/20" onClick={() => {
-                   if (window.confirm("Are you sure you want to cancel this order?")) {
-                      updateOrderStatus(order.id || order.orderId, 'Cancelled');
-                   }
-                }}>Cancel Order</Button>
+                <Button variant="outline" className="w-full text-error border-error hover:bg-error-container/20" onClick={handleCancelOrder} disabled={cancelling}>
+                   {cancelling ? 'Cancelling...' : 'Cancel Order'}
+                </Button>
              </div>
           )}
 

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useOrder } from '../../context/OrderContext';
+import React, { useState, useEffect } from 'react';
+import { orderService } from '../../services/orderService';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Link } from 'react-router-dom';
@@ -7,7 +7,9 @@ import { usePagination } from '../../hooks/usePagination';
 import { Pagination } from '../../components/common/Pagination';
 
 export const AdminOrdersPage = () => {
-  const { orders, updateOrderStatus } = useOrder();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
@@ -19,6 +21,22 @@ export const AdminOrdersPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [cancelReason, setCancelReason] = useState('Customer requested');
   const [customReason, setCustomReason] = useState('');
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const data = await orderService.getAllOrdersAdmin();
+      setOrders(data);
+    } catch (err) {
+      setError(err.message || 'Failed to load orders');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredOrders = orders.filter(o => {
     const q = searchQuery.toLowerCase();
@@ -43,24 +61,34 @@ export const AdminOrdersPage = () => {
     goToPage(1);
   };
 
-  const handleApproveConfirm = () => {
+  const handleApproveConfirm = async () => {
     if (!selectedOrder) return;
-    updateOrderStatus(selectedOrder.id || selectedOrder.orderId, 'Confirmed');
-    setSuccessMsg(`Order ${selectedOrder.id || selectedOrder.orderId} has been approved.`);
+    try {
+      await orderService.updateOrderStatusByAdmin(selectedOrder.id || selectedOrder.orderId, 'Confirmed');
+      setSuccessMsg(`Order ${selectedOrder.id || selectedOrder.orderId} has been approved.`);
+      fetchOrders();
+    } catch (err) {
+      alert(err.message || 'Failed to approve order');
+    }
     setApproveModalOpen(false);
     setSelectedOrder(null);
     setTimeout(() => setSuccessMsg(''), 5000);
   };
 
-  const handleCancelConfirm = () => {
+  const handleCancelConfirm = async () => {
     if (!selectedOrder) return;
     const finalReason = cancelReason === 'Other' ? customReason : cancelReason;
     if (!finalReason.trim()) {
       alert("Please provide a reason");
       return;
     }
-    updateOrderStatus(selectedOrder.id || selectedOrder.orderId, 'Cancelled', finalReason);
-    setSuccessMsg(`Order ${selectedOrder.id || selectedOrder.orderId} has been cancelled.`);
+    try {
+      await orderService.updateOrderStatusByAdmin(selectedOrder.id || selectedOrder.orderId, 'Cancelled');
+      setSuccessMsg(`Order ${selectedOrder.id || selectedOrder.orderId} has been cancelled.`);
+      fetchOrders();
+    } catch (err) {
+      alert(err.message || 'Failed to cancel order');
+    }
     setCancelModalOpen(false);
     setSelectedOrder(null);
     setCancelReason('Customer requested');
@@ -159,8 +187,8 @@ export const AdminOrdersPage = () => {
                   <div className="text-[10px] text-on-surface-variant">{new Date(order.createdAt).toLocaleString('en-GB')}</div>
                 </td>
                 <td className="p-4">
-                  <div className="text-body-sm text-on-surface font-medium">{order.customer?.name}</div>
-                  <div className="text-[10px] text-on-surface-variant">{order.customer?.phone} • {order.customer?.address?.split(',')[0]}</div>
+                  <div className="text-body-sm text-on-surface font-medium">{order.deliveryDetails?.fullName || order.customer?.name}</div>
+                  <div className="text-[10px] text-on-surface-variant">{order.deliveryDetails?.phone || order.customer?.phone} • {order.deliveryDetails?.address || order.customer?.address?.split(',')[0]}</div>
                 </td>
                 <td className="p-4 text-body-sm text-on-surface font-medium">{order.items?.length || 0} items</td>
                 <td className="p-4 font-price-sm font-bold text-primary">৳{order.total?.toLocaleString()}</td>

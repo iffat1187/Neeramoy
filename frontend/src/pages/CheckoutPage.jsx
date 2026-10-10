@@ -2,15 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
+import { orderService } from '../services/orderService';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { useOrder } from '../context/OrderContext';
 
 export const CheckoutPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isLoggedIn, user } = useAuth();
-  const { addOrder } = useOrder();
   const { 
     cartItems, 
     cartCount, 
@@ -35,6 +34,8 @@ export const CheckoutPage = () => {
     instructions: ''
   });
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -93,30 +94,31 @@ export const CheckoutPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handlePlaceOrder = (e) => {
+  const handlePlaceOrder = async (e) => {
     e.preventDefault();
+    setApiError('');
+
     if (validateForm()) {
-      const orderDetails = {
-        orderId: 'ORD-' + Math.floor(100000 + Math.random() * 900000),
-        date: new Date().toISOString(),
-        items: [...cartItems],
-        total: cartTotal,
-        subtotal: cartSubtotal,
-        discount: cartSavings,
-        deliveryCharge: deliveryCharge,
-        deliveryMethod: deliveryMethod,
-        paymentMethod,
-        deliveryDetails: formData,
-        customerDetails: {
-          name: formData.fullName,
-          email: formData.email,
-          phone: formData.phone
-        }
-      };
+      if (isSubmitting) return;
+      setIsSubmitting(true);
       
-      // Store order globally and navigate to confirmation
-      addOrder(orderDetails);
-      navigate('/order-confirmation', { state: { orderDetails }, replace: true });
+      try {
+        const orderPayload = {
+          items: cartItems.map(item => ({ id: item.id, quantity: item.quantity })),
+          deliveryDetails: formData,
+          deliveryMethod,
+          paymentMethod
+        };
+        
+        const savedOrder = await orderService.createOrder(orderPayload);
+        
+        navigate('/order-confirmation', { state: { orderDetails: savedOrder }, replace: true });
+      } catch (error) {
+        setApiError(error.message || 'Failed to place order. Please try again.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } finally {
+        setIsSubmitting(false);
+      }
     } else {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -143,6 +145,13 @@ export const CheckoutPage = () => {
           {/* Left: Forms */}
           <div className="lg:col-span-7 space-y-space-lg">
             
+            {apiError && (
+              <div className="bg-error/10 border border-error/20 text-error p-4 rounded-xl flex items-center gap-2">
+                <span className="material-symbols-outlined">error</span>
+                <p className="font-body-md font-medium">{apiError}</p>
+              </div>
+            )}
+
             {/* Delivery Information */}
             <div className="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 p-space-xl">
               <div className="flex items-center gap-3 mb-space-md pb-space-sm border-b border-outline-variant/30">
@@ -356,9 +365,9 @@ export const CheckoutPage = () => {
                 <span className="font-headline-xl font-bold text-primary">৳ {cartTotal}</span>
               </div>
               
-              <Button variant="primary" className="w-full py-4 text-[16px] shadow-md" onClick={handlePlaceOrder}>
-                Place Order 
-                {paymentMethod !== 'cod' && <span className="material-symbols-outlined ml-1">lock</span>}
+              <Button variant="primary" className="w-full py-4 text-[16px] shadow-md" onClick={handlePlaceOrder} disabled={isSubmitting}>
+                {isSubmitting ? 'Processing...' : 'Place Order'} 
+                {!isSubmitting && paymentMethod !== 'cod' && <span className="material-symbols-outlined ml-1">lock</span>}
               </Button>
             </div>
           </div>
