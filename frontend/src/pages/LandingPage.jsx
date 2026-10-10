@@ -12,7 +12,7 @@ export const LandingPage = () => {
   const { addToCart } = useCart();
 
   useEffect(() => {
-    medicineService.getTopSelling().then(data => setTopSelling(data));
+    medicineService.getTopSelling().then(data => setTopSelling(data.content || []));
   }, []);
 
   const handleAddToCart = (medicine) => {
@@ -60,7 +60,7 @@ export const LandingPage = () => {
               <span className="bg-surface-container px-3 py-1 rounded-full text-on-surface font-label-sm cursor-pointer hover:bg-surface-container-high transition-colors" onClick={() => navigate("/search?q=Napa")}>Napa Extra</span>
               <span className="bg-surface-container px-3 py-1 rounded-full text-on-surface font-label-sm cursor-pointer hover:bg-surface-container-high transition-colors" onClick={() => navigate("/search?q=Sergel")}>Sergel 20</span>
               <span className="bg-surface-container px-3 py-1 rounded-full text-on-surface font-label-sm cursor-pointer hover:bg-surface-container-high transition-colors" onClick={() => navigate("/search?q=Monas")}>Monas 10</span>
-              <span className="bg-surface-container px-3 py-1 rounded-full text-on-surface font-label-sm cursor-pointer hover:bg-surface-container-high transition-colors" onClick={() => navigate("/category/supplement")}>ভিটামিন (Vitamin)</span>
+              <span className="bg-surface-container px-3 py-1 rounded-full text-on-surface font-label-sm cursor-pointer hover:bg-surface-container-high transition-colors" onClick={() => navigate("/category/vitamins")}>ভিটামিন (Vitamin)</span>
             </div>
 
             <div className="grid grid-cols-3 gap-space-md pt-space-lg">
@@ -179,10 +179,10 @@ export const LandingPage = () => {
               { title: 'ডায়াবেটিস ও ইনসুলিন', icon: 'vaccines', color: 'bg-secondary-fixed text-secondary', path: '/category/diabetes' },
               { title: 'হার্ট ও প্রেশার', icon: 'cardiology', color: 'bg-error-container text-error', path: '/category/cardiac' },
               { title: 'মা ও শিশু যত্ন', icon: 'child_care', color: 'bg-tertiary-fixed text-tertiary', path: '/category/baby-mom' },
-              { title: 'সার্জিক্যাল ও হাইজিন', icon: 'sanitizer', color: 'bg-primary-fixed text-primary', path: '/category/home-care' },
+              { title: 'সার্জিক্যাল ও হাইজিন', icon: 'sanitizer', color: 'bg-primary-fixed text-primary', path: '/category/hygiene' },
               { title: 'গ্যাস্ট্রিক ও এসিডিটি', icon: 'pill', color: 'bg-surface-container-high text-on-surface-variant', path: '/category/gastric' },
-              { title: 'মেডিকেল ডিভাইস', icon: 'monitor_heart', color: 'bg-surface-container-highest text-on-surface-variant', path: '/category/device' },
-              { title: 'ভিটামিন ও নিউট্রিশন', icon: 'nutrition', color: 'bg-secondary-container text-secondary', path: '/category/supplement' },
+              { title: 'মেডিকেল ডিভাইস', icon: 'monitor_heart', color: 'bg-surface-container-highest text-on-surface-variant', path: '/category/devices' },
+              { title: 'ভিটামিন ও নিউট্রিশন', icon: 'nutrition', color: 'bg-secondary-container text-secondary', path: '/category/vitamins' },
             ].map((cat, i) => (
               <div key={i} className="flex flex-col items-center text-center group cursor-pointer" onClick={() => navigate(cat.path)}>
                 <div className={`w-16 h-16 rounded-full ${cat.color} flex items-center justify-center mb-space-sm group-hover:scale-110 transition-transform shadow-sm`}>

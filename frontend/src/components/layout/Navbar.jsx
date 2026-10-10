@@ -4,7 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { LogoutConfirmationModal } from '../common/LogoutConfirmationModal';
-
+import { medicineService } from '../../services/medicineService';
 export const Navbar = () => {
   const navigate = useNavigate();
   const { cartCount, cartTotal } = useCart();
@@ -14,10 +14,27 @@ export const Navbar = () => {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = React.useState(searchParams.get('q') || '');
   const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
+  const [categories, setCategories] = React.useState([]);
 
   React.useEffect(() => {
     setSearchQuery(searchParams.get('q') || '');
   }, [searchParams]);
+
+  React.useEffect(() => {
+    medicineService.getCategories().then(data => {
+      if (Array.isArray(data)) setCategories(data);
+    }).catch(err => console.error(err));
+  }, []);
+
+  const categoryLabels = {
+    'fever': 'জ্বর ও ব্যথা',
+    'gastric': 'গ্যাস্ট্রিক',
+    'respiratory': 'শ্বাসকষ্ট',
+    'hygiene': 'সার্জিক্যাল ও হাইজিন',
+    'devices': 'মেডিকেল ডিভাইস',
+    'vitamins': 'ভিটামিন ও নিউট্রিশন',
+    'pain': 'ব্যথানাশক'
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -175,10 +192,17 @@ export const Navbar = () => {
           <nav className="flex items-center overflow-x-auto py-2 gap-space-md text-label-md font-label-md no-scrollbar">
             <NavLink to="/category/prescription-medicine" className={({ isActive }) => `whitespace-nowrap transition-colors px-3 py-1.5 rounded-lg ${isActive ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}>প্রেসক্রিপশন ওষুধ</NavLink>
             <NavLink to="/category/otc-medicine" className={({ isActive }) => `whitespace-nowrap transition-colors px-3 py-1.5 rounded-lg ${isActive ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}>সাধারণ ওষুধ (OTC)</NavLink>
-            <NavLink to="/category/diabetes-insulin" className={({ isActive }) => `whitespace-nowrap transition-colors px-3 py-1.5 rounded-lg ${isActive ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}>ডায়াবেটিস ও ইনসুলিন</NavLink>
-            <NavLink to="/category/baby-mom" className={({ isActive }) => `whitespace-nowrap transition-colors px-3 py-1.5 rounded-lg ${isActive ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}>মা ও শিশু স্বাস্থ্য</NavLink>
-            <NavLink to="/category/medical-device" className={({ isActive }) => `whitespace-nowrap transition-colors px-3 py-1.5 rounded-lg ${isActive ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}>মেডিকেল ডিভাইস</NavLink>
-            <NavLink to="/category/surgical-hygiene" className={({ isActive }) => `whitespace-nowrap transition-colors px-3 py-1.5 rounded-lg ${isActive ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}>সার্জিক্যাল ও হাইজিন</NavLink>
+            
+            {categories.map(cat => (
+              <NavLink 
+                key={cat} 
+                to={`/category/${cat}`} 
+                className={({ isActive }) => `whitespace-nowrap transition-colors px-3 py-1.5 rounded-lg ${isActive ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}
+              >
+                {categoryLabels[cat] || cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </NavLink>
+            ))}
+            
             <NavLink to="/category/special-offers" className={({ isActive }) => `whitespace-nowrap transition-colors px-3 py-1.5 rounded-lg ${isActive ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}>বিশেষ অফার</NavLink>
           </nav>
         </div>

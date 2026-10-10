@@ -1,12 +1,17 @@
-import { MOCK_MEDICINES } from '../mockData/medicines';
 import { apiClient } from './apiClient';
 
 export const medicineService = {
-  async getAll() {
-    return new Promise(resolve => setTimeout(() => resolve(MOCK_MEDICINES), 300));
+  async getAll(params = {}) {
+    return apiClient.get('/medicines', params);
   },
   async getTopSelling() {
-    // In future: return apiClient.get('/medicines/top-selling');
-    return new Promise(resolve => setTimeout(() => resolve(MOCK_MEDICINES), 300));
+    // We can simulate top-selling by sorting by rating
+    return apiClient.get('/medicines', { sort: 'rating', size: 10, page: 0 });
+  },
+  async getById(id) {
+    return apiClient.get(`/medicines/${id}`);
+  },
+  async getCategories() {
+    return apiClient.get('/categories');
   }
 };

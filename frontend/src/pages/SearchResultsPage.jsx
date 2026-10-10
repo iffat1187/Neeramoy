@@ -4,7 +4,6 @@ import { MedicineCard } from '../components/common/MedicineCard';
 import { Button } from '../components/common/Button';
 import { useCart } from '../context/CartContext';
 import { medicineService } from '../services/medicineService';
-import { usePagination } from '../hooks/usePagination';
 import { Pagination } from '../components/common/Pagination';
 
 export const SearchResultsPage = () => {
@@ -15,14 +14,31 @@ export const SearchResultsPage = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   
-  const [medicines, setMedicines] = useState([]);
-  const [filteredMedicines, setFilteredMedicines] = useState([]);
+  const [paginatedItems, setPaginatedItems] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const getEffectiveType = () => {
     if (categoryId === 'otc-medicine') return 'otc';
     if (categoryId === 'prescription-medicine') return 'rx';
     return searchParams.get('prescriptionType') || 'all';
+  };
+
+  const getMappedCategory = (cat) => {
+    if (!cat) return null;
+    const map = {
+      'medical-device': 'devices',
+      'device': 'devices',
+      'surgical-hygiene': 'hygiene',
+      'home-care': 'hygiene',
+      'supplement': 'vitamins',
+      'fever': 'fever',
+      'pain': 'pain',
+      'gastric': 'gastric',
+      'respiratory': 'respiratory'
+    };
+    return map[cat] || cat;
   };
 
   const getMappedCategoryArray = (cat) => {
@@ -47,9 +63,18 @@ export const SearchResultsPage = () => {
   });
   const [sortBy, setSortBy] = useState('popularity');
 
-  const {
-    currentPage, totalPages, totalItems, paginatedItems, goToPage, pageSize
-  } = usePagination(filteredMedicines, 20, true, 'page');
+  const currentPage = parseInt(searchParams.get('page') || '1', 10);
+  const pageSize = 20;
+
+  const goToPage = (pageNumber) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (pageNumber === 1) {
+      newParams.delete('page');
+    } else {
+      newParams.set('page', pageNumber);
+    }
+    setSearchParams(newParams);
+  };
 
   useEffect(() => {
     setFilters(prev => ({
@@ -105,82 +130,43 @@ export const SearchResultsPage = () => {
   };
 
   useEffect(() => {
-    // Scroll to top on load
     window.scrollTo(0, 0);
     setIsLoading(true);
+
+    const apiParams = {
+      page: currentPage - 1,
+      size: pageSize,
+      sort: sortBy
+    };
+
+    if (query) apiParams.keyword = query;
+    if (filters.manufacturer) apiParams.manufacturer = filters.manufacturer;
+    if (filters.maxPrice < 2000) apiParams.maxPrice = filters.maxPrice;
     
-    // Fetch all mock data
-    medicineService.getTopSelling().then(data => {
-      let results = [...data];
-      
-      // Apply Search Query if any
-      if (query) {
-        const q = query.toLowerCase();
-        results = results.filter(m => {
-          const nameMatch = m.name?.toLowerCase().includes(q);
-          const genericMatch = m.genericName?.toLowerCase().includes(q);
-          const manufacturerMatch = m.manufacturer?.toLowerCase().includes(q);
-          const categoryMatch = m.category?.toLowerCase().includes(q);
-          const descMatch = m.description?.toLowerCase().includes(q);
-          const indicationMatch = m.indications?.some(ind => ind.toLowerCase().includes(q));
-          
-          return nameMatch || genericMatch || manufacturerMatch || categoryMatch || descMatch || indicationMatch;
-        });
-      }
-      
-      setMedicines(results);
-      applyFilters(results, filters, sortBy);
+    if (filters.type === 'otc') apiParams.isOtc = true;
+    else if (filters.type === 'rx') apiParams.isOtc = false;
+
+    if (categoryId === 'special-offers') {
+      apiParams.category = 'special-offers';
+    } else if (filters.healthCategory && filters.healthCategory !== 'all') {
+      apiParams.category = getMappedCategory(filters.healthCategory);
+    } else if (categoryId && categoryId !== 'medicine' && categoryId !== 'otc-medicine' && categoryId !== 'prescription-medicine' && categoryId !== 'all') {
+      apiParams.category = getMappedCategory(categoryId);
+    }
+
+    medicineService.getAll(apiParams).then(data => {
+      setPaginatedItems(data.content || []);
+      setTotalPages(data.totalPages || 1);
+      setTotalItems(data.totalElements || 0);
+      setIsLoading(false);
+    }).catch(err => {
+      console.error(err);
+      setPaginatedItems([]);
+      setTotalPages(1);
+      setTotalItems(0);
       setIsLoading(false);
     });
-  }, [categoryId, query]);
-
-  useEffect(() => {
-    applyFilters(medicines, filters, sortBy);
-  }, [filters, sortBy, medicines]);
-
-  const applyFilters = (data, currentFilters, sortMode) => {
-    let filtered = [...data];
-    
-    // Type Filter (Rx/OTC)
-    if (currentFilters.type === 'otc') {
-      filtered = filtered.filter(m => m.isOtc);
-    } else if (currentFilters.type === 'rx') {
-      filtered = filtered.filter(m => !m.isOtc);
-    }
-    
-    // Price Filter
-    filtered = filtered.filter(m => m.price <= currentFilters.maxPrice);
-    
-    // Main Route Filter (from URL Path)
-    if (categoryId === 'special-offers') {
-      filtered = filtered.filter(m => m.discount > 0);
-    } else if (categoryId && categoryId !== 'medicine' && categoryId !== 'otc-medicine' && categoryId !== 'prescription-medicine' && categoryId !== 'all') {
-      const mappedRouteCategories = getMappedCategoryArray(categoryId);
-      filtered = filtered.filter(m => mappedRouteCategories.includes(m.category));
-    }
-    
-    // Health Category Sub-filter (from URL Query Param)
-    if (currentFilters.healthCategory !== 'all') {
-      const mappedHealthCategories = getMappedCategoryArray(currentFilters.healthCategory);
-      filtered = filtered.filter(m => mappedHealthCategories.includes(m.category));
-    }
-
-    // Manufacturer Filter
-    if (currentFilters.manufacturer) {
-      filtered = filtered.filter(m => m.manufacturer === currentFilters.manufacturer);
-    }
-    
-    // Sort
-    if (sortMode === 'price-asc') {
-      filtered.sort((a, b) => a.price - b.price);
-    } else if (sortMode === 'price-desc') {
-      filtered.sort((a, b) => b.price - a.price);
-    } else if (sortMode === 'rating') {
-      filtered.sort((a, b) => b.rating - a.rating);
-    }
-    
-    setFilteredMedicines(filtered);
-  };
+  }, [categoryId, query, filters, sortBy, currentPage]);
 
   const clearFilters = () => {
     const newParams2 = new URLSearchParams(searchParams);
@@ -262,7 +248,7 @@ export const SearchResultsPage = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-space-md pb-space-md">
           <div className="flex flex-wrap items-center gap-space-xs">
             <span className="font-label-md text-on-surface font-bold pr-space-xs">
-              {filteredMedicines.length}টি পণ্য প্রদর্শিত
+              {totalItems}টি পণ্য প্রদর্শিত
             </span>
             <Button variant="outline" className="md:hidden py-1 px-3 text-body-sm" onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}>
               <span className="material-symbols-outlined text-[18px]">tune</span> ফিল্টার

@@ -22,24 +22,21 @@ export const ProductDetailsPage = () => {
     window.scrollTo(0, 0);
     setIsLoading(true);
     
-    // Simulate API fetch
-    medicineService.getTopSelling().then(data => {
-      const found = data.find(m => m.id === id);
-      if (found) {
-        setProduct(found);
-        // Get related products (mock: same category or first 4)
-        const related = data.filter(m => m.category === found.category && m.id !== found.id).slice(0, 4);
-        if (related.length < 4) {
-          const fillers = data.filter(m => m.id !== found.id && !related.find(r => r.id === m.id)).slice(0, 4 - related.length);
-          setRelatedProducts([...related, ...fillers]);
-        } else {
-          setRelatedProducts(related);
-        }
-      } else {
-        setProduct(null); // Not found
+    medicineService.getById(id).then(found => {
+      setProduct(found);
+      if (found && found.category) {
+        return medicineService.getAll({ category: found.category, size: 5 });
       }
+      return { content: [] };
+    }).then(relatedData => {
+      const related = relatedData.content.filter(m => m.id !== id).slice(0, 4);
+      setRelatedProducts(related);
       setIsLoading(false);
       setQuantity(1);
+    }).catch(err => {
+      console.error(err);
+      setProduct(null);
+      setIsLoading(false);
     });
   }, [id]);
 
