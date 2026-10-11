@@ -13,6 +13,9 @@ export const orderService = {
   async cancelOrder(id) {
     return apiClient.patch(`/orders/${id}/cancel`);
   },
+  async initiatePayment(id) {
+    return apiClient.post(`/payment/sslcommerz/initiate/${id}`);
+  },
   
   // Admin Endpoints
   async getAllOrdersAdmin() {

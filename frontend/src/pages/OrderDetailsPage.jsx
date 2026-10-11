@@ -12,6 +12,7 @@ export const OrderDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [cancelling, setCancelling] = useState(false);
+  const [retrying, setRetrying] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -57,10 +58,26 @@ export const OrderDetailsPage = () => {
      }
   };
 
+  const handleRetryPayment = async () => {
+    try {
+      setRetrying(true);
+      const res = await orderService.initiatePayment(order.id || order.orderId);
+      if (res && res.paymentUrl) {
+        window.location.href = res.paymentUrl;
+      } else {
+        alert('Payment gateway URL not received');
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to initiate payment');
+    } finally {
+      setRetrying(false);
+    }
+  };
+
   const formatPaymentMethod = (method) => {
     if (method === 'cod') return 'Cash on Delivery';
     if (method === 'bkash') return 'bKash Payment';
-    if (method === 'online') return 'Online Payment / Card';
+    if (method === 'online' || method === 'sslcommerz') return 'Online Payment (SSLCommerz)';
     return method;
   };
 
@@ -171,9 +188,46 @@ export const OrderDetailsPage = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-[11px] text-outline uppercase tracking-wider mb-1">Status</p>
-                  <span className="inline-block bg-secondary-container/40 text-secondary-fixed-dim px-2 py-0.5 rounded font-bold text-[12px]">{order.paymentStatus || 'Pending'}</span>
+                  {order.paymentStatus === 'Paid' ? (
+                    <span className="inline-block bg-emerald-500/15 text-emerald-600 px-2.5 py-0.5 rounded font-bold text-[12px]">Paid (Verified)</span>
+                  ) : order.paymentStatus === 'Failed' ? (
+                    <span className="inline-block bg-error/15 text-error px-2.5 py-0.5 rounded font-bold text-[12px]">Failed</span>
+                  ) : order.paymentStatus === 'Cancelled' ? (
+                    <span className="inline-block bg-amber-500/15 text-amber-700 px-2.5 py-0.5 rounded font-bold text-[12px]">Cancelled</span>
+                  ) : (
+                    <span className="inline-block bg-secondary-container/40 text-secondary-fixed-dim px-2 py-0.5 rounded font-bold text-[12px]">{order.paymentStatus || 'Pending'}</span>
+                  )}
                 </div>
               </div>
+
+              {order.tranId && (
+                <div className="mb-space-md p-2.5 bg-surface-container-low rounded-lg text-body-sm flex flex-col gap-1 border border-outline-variant/20">
+                  <div className="flex justify-between items-center text-[12px]">
+                    <span className="text-on-surface-variant">Transaction ID:</span>
+                    <span className="font-mono font-bold text-on-surface">{order.tranId}</span>
+                  </div>
+                  {order.cardType && (
+                    <div className="flex justify-between items-center text-[12px]">
+                      <span className="text-on-surface-variant">Channel:</span>
+                      <span className="font-bold text-on-surface">{order.cardType}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {order.paymentStatus !== 'Paid' && (order.paymentMethod === 'online' || order.paymentMethod === 'sslcommerz') && (
+                <div className="mb-space-md">
+                  <Button 
+                    variant="primary" 
+                    className="w-full py-2 text-sm shadow-sm flex items-center justify-center gap-1.5"
+                    onClick={handleRetryPayment}
+                    disabled={retrying}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">lock</span>
+                    {retrying ? 'Connecting to Gateway...' : 'Pay with SSLCommerz'}
+                  </Button>
+                </div>
+              )}
 
               <div className="pt-space-md border-t border-outline-variant/30 space-y-3">
                 <div className="flex justify-between text-body-md text-on-surface">

@@ -37,6 +37,14 @@ public class Order {
     private double discount;
     private double total;
 
+    // Payment tracking fields
+    private String tranId;
+    private String valId;
+    private String bankTranId;
+    private String cardType;
+    private LocalDateTime paidAt;
+    private String paymentUrl;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

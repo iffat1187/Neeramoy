@@ -58,7 +58,7 @@ export const AdminOrdersPage = () => {
     const matchPayment = filterPayment === 'All' ||
       (filterPayment === 'cod' && (method === 'cod' || method === 'cash on delivery')) ||
       (filterPayment === 'bkash' && method === 'bkash') ||
-      (filterPayment === 'online' && (method === 'online' || method === 'card'));
+      (filterPayment === 'online' && (method === 'online' || method === 'card' || method === 'sslcommerz'));
 
     return matchSearch && matchStatus && matchPayment;
   }).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));

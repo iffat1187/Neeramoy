@@ -19,7 +19,8 @@ public class NeeramoyApplication {
         File[] candidates = new File[] {
             new File(".env"),
             new File("backend/Neeramoy Backend/.env"),
-            new File("../.env")
+            new File("../.env"),
+            new File("../../.env")
         };
         for (File file : candidates) {
             if (file.exists() && file.isFile()) {
@@ -38,14 +39,13 @@ public class NeeramoyApplication {
                                 (value.startsWith("'") && value.endsWith("'") && value.length() >= 2)) {
                                 value = value.substring(1, value.length() - 1);
                             }
-                            if (System.getProperty(key) == null && System.getenv(key) == null) {
+                            if (System.getProperty(key) == null && System.getenv(key) == null && !value.isEmpty()) {
                                 System.setProperty(key, value);
                             }
                         }
                     }
                 } catch (Exception ignored) {
                 }
-                break;
             }
         }
     }

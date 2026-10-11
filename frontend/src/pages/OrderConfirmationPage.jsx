@@ -14,18 +14,39 @@ export const OrderConfirmationPage = () => {
   const { isLoggedIn } = useAuth();
 
   const orderIdFromUrl = searchParams.get('orderId');
+  const paymentParam = searchParams.get('payment');
   const [order, setOrder] = useState(location.state?.orderDetails || null);
   const [loading, setLoading] = useState(!location.state?.orderDetails && Boolean(orderIdFromUrl));
   const [error, setError] = useState('');
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState('');
   const hasCleared = useRef(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (location.state?.orderDetails && !hasCleared.current) {
+    if (!hasCleared.current) {
       clearCart();
       hasCleared.current = true;
     }
-  }, [location.state, clearCart]);
+  }, [clearCart]);
+
+  const handleRetryPayment = async () => {
+    if (!order) return;
+    try {
+      setRetrying(true);
+      setRetryError('');
+      const res = await orderService.initiatePayment(order.id || order.orderId);
+      if (res && res.paymentUrl) {
+        window.location.href = res.paymentUrl;
+      } else {
+        throw new Error('Payment URL not received');
+      }
+    } catch (err) {
+      setRetryError(err.message || 'Failed to initiate payment retry.');
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   useEffect(() => {
     if (!order && orderIdFromUrl) {
@@ -116,14 +137,34 @@ export const OrderConfirmationPage = () => {
   return (
     <div className="w-full bg-background min-h-screen pb-space-2xl">
       {/* Success Hero Area */}
-      <div className="bg-primary pt-space-2xl pb-space-3xl text-on-primary text-center px-margin-desktop">
+      <div className={`pt-space-2xl pb-space-3xl text-on-primary text-center px-margin-desktop ${orderDetails.paymentStatus === 'Failed' || paymentParam === 'failed' ? 'bg-error' : orderDetails.paymentStatus === 'Cancelled' || paymentParam === 'cancelled' ? 'bg-amber-600' : 'bg-primary'}`}>
         <div className="max-w-3xl mx-auto">
           <div className="w-20 h-20 bg-on-primary text-primary rounded-full flex items-center justify-center mx-auto mb-space-lg shadow-lg">
-            <span className="material-symbols-outlined text-[48px]">check_circle</span>
+            {orderDetails.paymentStatus === 'Failed' || paymentParam === 'failed' ? (
+              <span className="material-symbols-outlined text-[48px] text-error">error</span>
+            ) : orderDetails.paymentStatus === 'Cancelled' || paymentParam === 'cancelled' ? (
+              <span className="material-symbols-outlined text-[48px] text-amber-600">cancel</span>
+            ) : (
+              <span className="material-symbols-outlined text-[48px] text-primary">check_circle</span>
+            )}
           </div>
-          <h1 className="font-headline-xl font-bold mb-2">Order Placed Successfully!</h1>
+          <h1 className="font-headline-xl font-bold mb-2">
+            {orderDetails.paymentStatus === 'Paid'
+              ? 'Order Placed & Payment Verified!'
+              : orderDetails.paymentStatus === 'Failed' || paymentParam === 'failed'
+              ? 'Order Placed — Payment Incomplete'
+              : orderDetails.paymentStatus === 'Cancelled' || paymentParam === 'cancelled'
+              ? 'Order Placed — Payment Cancelled'
+              : 'Order Placed Successfully!'}
+          </h1>
           <p className="font-body-lg text-primary-container mb-space-xl">
-            Thank you for choosing Neeramoy. We have received your order and are processing it now.
+            {orderDetails.paymentStatus === 'Paid'
+              ? 'Thank you for choosing Neeramoy. Your online payment has been verified successfully.'
+              : orderDetails.paymentStatus === 'Failed' || paymentParam === 'failed'
+              ? 'Your order has been recorded. However, the online payment did not complete. You can retry paying below.'
+              : orderDetails.paymentStatus === 'Cancelled' || paymentParam === 'cancelled'
+              ? 'Your order has been recorded. The online payment was cancelled. You can retry paying below.'
+              : 'Thank you for choosing Neeramoy. We have received your order and are processing it now.'}
           </p>
           <div className="inline-block bg-primary-container-dark/20 border border-primary-container/30 px-space-xl py-space-sm rounded-xl">
             <p className="text-[12px] uppercase tracking-wider text-primary-container mb-1">Order Number</p>
@@ -209,21 +250,75 @@ export const OrderConfirmationPage = () => {
             
             {/* Payment Summary */}
             <div className="bg-surface-container-lowest rounded-2xl shadow-md border border-outline-variant/30 overflow-hidden">
-              <div className="bg-surface-container-low px-space-lg py-space-md border-b border-outline-variant/30 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">payments</span>
-                <h3 className="font-headline-sm font-bold text-on-surface">Payment Information</h3>
+              <div className="bg-surface-container-low px-space-lg py-space-md border-b border-outline-variant/30 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">payments</span>
+                  <h3 className="font-headline-sm font-bold text-on-surface">Payment Information</h3>
+                </div>
+                {orderDetails.paymentStatus === 'Paid' && (
+                  <span className="text-[11px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[13px]">verified</span> Verified
+                  </span>
+                )}
               </div>
               <div className="p-space-lg">
                 <div className="flex items-center justify-between mb-space-md">
                   <div>
                     <p className="text-[11px] text-outline uppercase tracking-wider mb-1">Method</p>
-                    <p className="font-label-md font-bold text-on-surface">{formatPaymentMethod(orderDetails.paymentMethod)}</p>
+                    <p className="font-label-md font-bold text-on-surface">
+                      {orderDetails.paymentMethod === 'online' || orderDetails.paymentMethod === 'sslcommerz' 
+                        ? 'Online Payment (SSLCommerz)' 
+                        : formatPaymentMethod(orderDetails.paymentMethod)}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="text-[11px] text-outline uppercase tracking-wider mb-1">Status</p>
-                    <span className="inline-block bg-secondary-container/40 text-secondary-fixed-dim px-2 py-0.5 rounded font-bold text-[12px] capitalize">{orderDetails.paymentStatus}</span>
+                    {orderDetails.paymentStatus === 'Paid' ? (
+                      <span className="inline-block bg-emerald-500/15 text-emerald-600 px-2.5 py-0.5 rounded font-bold text-[12px]">Paid</span>
+                    ) : orderDetails.paymentStatus === 'Failed' ? (
+                      <span className="inline-block bg-error/15 text-error px-2.5 py-0.5 rounded font-bold text-[12px]">Failed</span>
+                    ) : orderDetails.paymentStatus === 'Cancelled' ? (
+                      <span className="inline-block bg-amber-500/15 text-amber-700 px-2.5 py-0.5 rounded font-bold text-[12px]">Cancelled</span>
+                    ) : (
+                      <span className="inline-block bg-secondary-container/40 text-secondary-fixed-dim px-2 py-0.5 rounded font-bold text-[12px] capitalize">{orderDetails.paymentStatus}</span>
+                    )}
                   </div>
                 </div>
+
+                {orderDetails.tranId && (
+                  <div className="mb-space-md p-2.5 bg-surface-container-low rounded-lg text-body-sm flex flex-col gap-1 border border-outline-variant/20">
+                    <div className="flex justify-between items-center text-[12px]">
+                      <span className="text-on-surface-variant">Transaction ID:</span>
+                      <span className="font-mono font-bold text-on-surface">{orderDetails.tranId}</span>
+                    </div>
+                    {orderDetails.cardType && (
+                      <div className="flex justify-between items-center text-[12px]">
+                        <span className="text-on-surface-variant">Channel:</span>
+                        <span className="font-bold text-on-surface">{orderDetails.cardType}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Retry action if payment failed or cancelled */}
+                {orderDetails.paymentStatus !== 'Paid' && (orderDetails.paymentMethod === 'online' || orderDetails.paymentMethod === 'sslcommerz') && (
+                  <div className="mb-space-md p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                    <p className="text-body-sm text-amber-800 dark:text-amber-300 font-medium mb-2">
+                      {orderDetails.paymentStatus === 'Failed' 
+                        ? 'Your online payment was not completed. You can retry paying now.' 
+                        : 'Payment was cancelled. You can retry anytime.'}
+                    </p>
+                    {retryError && <p className="text-body-sm text-error font-medium mb-2">{retryError}</p>}
+                    <Button 
+                      variant="primary" 
+                      className="w-full py-2.5 text-sm shadow-sm"
+                      onClick={handleRetryPayment}
+                      disabled={retrying}
+                    >
+                      {retrying ? 'Connecting to SSLCommerz...' : 'Retry Payment with SSLCommerz'}
+                    </Button>
+                  </div>
+                )}
 
                 <div className="pt-space-md border-t border-outline-variant/30 space-y-3">
                   <div className="flex justify-between text-body-md text-on-surface">

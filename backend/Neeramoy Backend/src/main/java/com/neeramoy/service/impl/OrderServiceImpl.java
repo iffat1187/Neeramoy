@@ -25,6 +25,9 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private MedicineRepository medicineRepository;
 
+    @Autowired(required = false)
+    private com.neeramoy.payment.sslcommerz.SSLCommerzService sslCommerzService;
+
     @Override
     public Order createOrder(OrderRequestDto request, String customerId) {
         if (request.getItems() == null || request.getItems().isEmpty()) {
@@ -71,15 +74,26 @@ public class OrderServiceImpl implements OrderService {
 
         String orderId = "ORD-" + (100000 + (int)(Math.random() * 900000));
 
+        boolean isOnlinePayment = "online".equalsIgnoreCase(request.getPaymentMethod()) || "sslcommerz".equalsIgnoreCase(request.getPaymentMethod());
+        if (isOnlinePayment) {
+            if (request.getDeliveryDetails() == null || 
+                request.getDeliveryDetails().getPostalCode() == null || 
+                request.getDeliveryDetails().getPostalCode().trim().isEmpty()) {
+                throw new IllegalArgumentException("Shipping postal code is required for online payment.");
+            }
+        }
+        String tranId = isOnlinePayment ? "TXN-" + orderId + "-" + System.currentTimeMillis() : null;
+
         Order order = Order.builder()
                 .orderId(orderId)
+                .tranId(tranId)
                 .customerId(customerId)
                 .items(orderItems)
                 .deliveryDetails(request.getDeliveryDetails())
                 .deliveryMethod(request.getDeliveryMethod())
                 .paymentMethod(request.getPaymentMethod())
                 .status("Pending")
-                .paymentStatus("cod".equalsIgnoreCase(request.getPaymentMethod()) ? "Pending" : "Pending")
+                .paymentStatus("Pending")
                 .subtotal(subtotal)
                 .deliveryCharge(deliveryCharge)
                 .discount(discount)
@@ -88,7 +102,20 @@ public class OrderServiceImpl implements OrderService {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+
+        if (isOnlinePayment && sslCommerzService != null) {
+            com.neeramoy.dto.payment.SSLCommerzInitResponse initRes = sslCommerzService.initiatePayment(savedOrder);
+            if (initRes != null && "SUCCESS".equalsIgnoreCase(initRes.getStatus()) && initRes.getGatewayPageURL() != null) {
+                savedOrder.setPaymentUrl(initRes.getGatewayPageURL());
+                savedOrder = orderRepository.save(savedOrder);
+            } else {
+                String reason = initRes != null && initRes.getFailedreason() != null ? initRes.getFailedreason() : "Gateway session error";
+                throw new IllegalStateException("Online payment initiation failed: " + reason);
+            }
+        }
+
+        return savedOrder;
     }
 
     @Override

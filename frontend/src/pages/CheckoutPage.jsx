@@ -62,7 +62,8 @@ export const CheckoutPage = () => {
         ...prev,
         fullName: user.name || prev.fullName,
         email: user.email || prev.email,
-        phone: user.phone || prev.phone
+        phone: user.phone || prev.phone,
+        postalCode: user.postalCode || prev.postalCode
       }));
     }
   }, [isLoggedIn, user]);
@@ -90,6 +91,11 @@ export const CheckoutPage = () => {
     if (!formData.address.trim()) newErrors.address = 'Delivery address is required';
     if (!formData.city.trim()) newErrors.city = 'City is required';
     if (!formData.area.trim()) newErrors.area = 'Area is required';
+    if (!formData.postalCode.trim()) {
+      newErrors.postalCode = 'Postal code is required';
+    } else if (!/^\d{4}$/.test(formData.postalCode.trim())) {
+      newErrors.postalCode = 'Valid 4-digit postal code required (e.g. 1205)';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -113,7 +119,13 @@ export const CheckoutPage = () => {
         
         const savedOrder = await orderService.createOrder(orderPayload);
         const stableOrderId = savedOrder.orderId || savedOrder.id;
-        navigate(`/order-confirmation?orderId=${stableOrderId}`, { state: { orderDetails: savedOrder }, replace: true });
+        
+        if (savedOrder.paymentUrl) {
+          clearCart();
+          window.location.href = savedOrder.paymentUrl;
+        } else {
+          navigate(`/order-confirmation?orderId=${stableOrderId}`, { state: { orderDetails: savedOrder }, replace: true });
+        }
       } catch (error) {
         setApiError(error.message || 'Failed to place order. Please try again.');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -223,12 +235,13 @@ export const CheckoutPage = () => {
                 </div>
 
                 <div>
-                  <label className="block font-label-md text-on-surface mb-1">Postal Code</label>
+                  <label className="block font-label-md text-on-surface mb-1">Postal Code *</label>
                   <input 
                     type="text" name="postalCode" value={formData.postalCode} onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 rounded-lg border border-outline-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-surface"
+                    className={`w-full px-4 py-2.5 rounded-lg border ${errors.postalCode ? 'border-error bg-error/5' : 'border-outline-variant/50'} focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-surface`}
                     placeholder="e.g. 1212"
                   />
+                  {errors.postalCode && <p className="text-error text-[12px] mt-1">{errors.postalCode}</p>}
                 </div>
 
                 <div className="md:col-span-2">
@@ -297,32 +310,28 @@ export const CheckoutPage = () => {
                   <span className="text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">Active</span>
                 </label>
 
-                <div className="flex items-center justify-between p-4 rounded-xl border border-outline-variant/20 bg-surface-container-low/40 opacity-60 cursor-not-allowed">
+                <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${paymentMethod === 'online' ? 'border-primary bg-primary/5' : 'border-outline-variant/40 hover:bg-surface-container'}`}>
                   <div className="flex items-center">
-                    <input type="radio" name="paymentMethod" value="bkash" disabled checked={false} className="w-4 h-4 text-outline border-outline-variant cursor-not-allowed" />
+                    <input type="radio" name="paymentMethod" value="online" checked={paymentMethod === 'online'} onChange={() => setPaymentMethod('online')} className="w-4 h-4 text-primary focus:ring-primary border-outline" />
                     <div className="ml-3 flex items-center gap-3">
-                      <div className="bg-pink-600/70 text-white font-bold px-2 py-0.5 rounded text-xs">bKash</div>
-                      <span className="font-label-lg font-medium text-on-surface-variant">Pay with bKash</span>
+                      <span className="material-symbols-outlined text-primary">credit_card</span>
+                      <div>
+                        <span className="block font-label-lg font-bold text-on-surface">Online Payment (SSLCommerz)</span>
+                        <span className="block text-body-sm text-on-surface-variant">Cards (Visa, Mastercard), Mobile Banking (bKash, Nagad), Net Banking</span>
+                      </div>
                     </div>
                   </div>
-                  <span className="text-[11px] font-bold text-outline uppercase tracking-wider px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant/30">Coming Soon</span>
-                </div>
-
-                <div className="flex items-center justify-between p-4 rounded-xl border border-outline-variant/20 bg-surface-container-low/40 opacity-60 cursor-not-allowed">
-                  <div className="flex items-center">
-                    <input type="radio" name="paymentMethod" value="online" disabled checked={false} className="w-4 h-4 text-outline border-outline-variant cursor-not-allowed" />
-                    <div className="ml-3 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-outline">credit_card</span>
-                      <span className="font-label-lg font-medium text-on-surface-variant">Online Payment (Cards / Net Banking)</span>
-                    </div>
-                  </div>
-                  <span className="text-[11px] font-bold text-outline uppercase tracking-wider px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant/30">Coming Soon</span>
-                </div>
+                  <span className="text-[11px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">Sandbox Ready</span>
+                </label>
               </div>
               
               <div className="mt-4 p-3 bg-primary-container/20 text-on-surface-variant rounded-lg text-sm flex items-start gap-2 border border-outline-variant/20">
                 <span className="material-symbols-outlined text-[16px] text-primary mt-0.5">verified_user</span>
-                <p>Cash on Delivery is currently active for all orders. Pay cash at your doorstep upon receiving and verifying your medicines.</p>
+                <p>
+                  {paymentMethod === 'cod' 
+                    ? 'Cash on Delivery is active. Pay cash at your doorstep upon receiving your medicines.' 
+                    : 'You will be securely redirected to SSLCommerz Sandbox to complete your payment with test card or mobile banking.'}
+                </p>
               </div>
             </div>
 
