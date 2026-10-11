@@ -112,8 +112,8 @@ export const CheckoutPage = () => {
         };
         
         const savedOrder = await orderService.createOrder(orderPayload);
-        
-        navigate('/order-confirmation', { state: { orderDetails: savedOrder }, replace: true });
+        const stableOrderId = savedOrder.orderId || savedOrder.id;
+        navigate(`/order-confirmation?orderId=${stableOrderId}`, { state: { orderDetails: savedOrder }, replace: true });
       } catch (error) {
         setApiError(error.message || 'Failed to place order. Please try again.');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -286,37 +286,44 @@ export const CheckoutPage = () => {
               </div>
               
               <div className="space-y-3">
-                <label className={`flex items-center p-4 rounded-xl border cursor-pointer transition-colors ${paymentMethod === 'cod' ? 'border-primary bg-primary/5' : 'border-outline-variant/40 hover:bg-surface-container'}`}>
-                  <input type="radio" name="paymentMethod" value="cod" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} className="w-4 h-4 text-primary focus:ring-primary border-outline" />
-                  <div className="ml-3 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-on-surface-variant">payments</span>
-                    <span className="font-label-lg font-bold text-on-surface">Cash on Delivery</span>
+                <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${paymentMethod === 'cod' ? 'border-primary bg-primary/5' : 'border-outline-variant/40 hover:bg-surface-container'}`}>
+                  <div className="flex items-center">
+                    <input type="radio" name="paymentMethod" value="cod" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} className="w-4 h-4 text-primary focus:ring-primary border-outline" />
+                    <div className="ml-3 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary">payments</span>
+                      <span className="font-label-lg font-bold text-on-surface">Cash on Delivery</span>
+                    </div>
                   </div>
+                  <span className="text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">Active</span>
                 </label>
 
-                <label className={`flex items-center p-4 rounded-xl border cursor-pointer transition-colors ${paymentMethod === 'bkash' ? 'border-primary bg-primary/5' : 'border-outline-variant/40 hover:bg-surface-container'}`}>
-                  <input type="radio" name="paymentMethod" value="bkash" checked={paymentMethod === 'bkash'} onChange={() => setPaymentMethod('bkash')} className="w-4 h-4 text-primary focus:ring-primary border-outline" />
-                  <div className="ml-3 flex items-center gap-3">
-                    <div className="bg-pink-600 text-white font-bold px-2 py-0.5 rounded text-xs">bKash</div>
-                    <span className="font-label-lg font-bold text-on-surface">Pay with bKash</span>
+                <div className="flex items-center justify-between p-4 rounded-xl border border-outline-variant/20 bg-surface-container-low/40 opacity-60 cursor-not-allowed">
+                  <div className="flex items-center">
+                    <input type="radio" name="paymentMethod" value="bkash" disabled checked={false} className="w-4 h-4 text-outline border-outline-variant cursor-not-allowed" />
+                    <div className="ml-3 flex items-center gap-3">
+                      <div className="bg-pink-600/70 text-white font-bold px-2 py-0.5 rounded text-xs">bKash</div>
+                      <span className="font-label-lg font-medium text-on-surface-variant">Pay with bKash</span>
+                    </div>
                   </div>
-                </label>
+                  <span className="text-[11px] font-bold text-outline uppercase tracking-wider px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant/30">Coming Soon</span>
+                </div>
 
-                <label className={`flex items-center p-4 rounded-xl border cursor-pointer transition-colors ${paymentMethod === 'online' ? 'border-primary bg-primary/5' : 'border-outline-variant/40 hover:bg-surface-container'}`}>
-                  <input type="radio" name="paymentMethod" value="online" checked={paymentMethod === 'online'} onChange={() => setPaymentMethod('online')} className="w-4 h-4 text-primary focus:ring-primary border-outline" />
-                  <div className="ml-3 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-on-surface-variant">credit_card</span>
-                    <span className="font-label-lg font-bold text-on-surface">Online Payment (Cards / Net Banking)</span>
+                <div className="flex items-center justify-between p-4 rounded-xl border border-outline-variant/20 bg-surface-container-low/40 opacity-60 cursor-not-allowed">
+                  <div className="flex items-center">
+                    <input type="radio" name="paymentMethod" value="online" disabled checked={false} className="w-4 h-4 text-outline border-outline-variant cursor-not-allowed" />
+                    <div className="ml-3 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-outline">credit_card</span>
+                      <span className="font-label-lg font-medium text-on-surface-variant">Online Payment (Cards / Net Banking)</span>
+                    </div>
                   </div>
-                </label>
+                  <span className="text-[11px] font-bold text-outline uppercase tracking-wider px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant/30">Coming Soon</span>
+                </div>
               </div>
               
-              {paymentMethod !== 'cod' && (
-                <div className="mt-4 p-3 bg-secondary-container/20 text-on-surface-variant rounded-lg text-sm flex items-start gap-2">
-                  <span className="material-symbols-outlined text-[16px] mt-0.5">info</span>
-                  <p>You will be redirected to the secure payment gateway after clicking "Place Order".</p>
-                </div>
-              )}
+              <div className="mt-4 p-3 bg-primary-container/20 text-on-surface-variant rounded-lg text-sm flex items-start gap-2 border border-outline-variant/20">
+                <span className="material-symbols-outlined text-[16px] text-primary mt-0.5">verified_user</span>
+                <p>Cash on Delivery is currently active for all orders. Pay cash at your doorstep upon receiving and verifying your medicines.</p>
+              </div>
             </div>
 
           </div>

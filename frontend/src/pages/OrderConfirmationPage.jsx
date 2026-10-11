@@ -1,27 +1,105 @@
-import React, { useEffect, useRef } from 'react';
-import { useLocation, useNavigate, Navigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams, Navigate } from 'react-router-dom';
 import { Button } from '../components/common/Button';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { orderService } from '../services/orderService';
 import { FALLBACK_MEDICINE_IMAGE, handleImageError } from '../utils/imageUtils';
 
 export const OrderConfirmationPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const orderDetails = location.state?.orderDetails;
+  const [searchParams] = useSearchParams();
   const { clearCart } = useCart();
+  const { isLoggedIn } = useAuth();
+
+  const orderIdFromUrl = searchParams.get('orderId');
+  const [order, setOrder] = useState(location.state?.orderDetails || null);
+  const [loading, setLoading] = useState(!location.state?.orderDetails && Boolean(orderIdFromUrl));
+  const [error, setError] = useState('');
   const hasCleared = useRef(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (orderDetails && !hasCleared.current) {
+    if (location.state?.orderDetails && !hasCleared.current) {
       clearCart();
       hasCleared.current = true;
     }
-  }, [orderDetails, clearCart]);
+  }, [location.state, clearCart]);
 
-  if (!orderDetails) {
+  useEffect(() => {
+    if (!order && orderIdFromUrl) {
+      let isMounted = true;
+      const fetchExistingOrder = async () => {
+        try {
+          setLoading(true);
+          setError('');
+          const data = await orderService.getOrderById(orderIdFromUrl);
+          if (isMounted) {
+            setOrder(data);
+          }
+        } catch (err) {
+          if (isMounted) {
+            setError(err.message || 'Unable to retrieve order details. Please verify your order ID.');
+          }
+        } finally {
+          if (isMounted) {
+            setLoading(false);
+          }
+        }
+      };
+
+      fetchExistingOrder();
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [order, orderIdFromUrl]);
+
+  if (loading) {
+    return (
+      <div className="w-full bg-background min-h-[60vh] flex flex-col items-center justify-center p-space-xl">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+        <p className="font-label-lg text-on-surface">Loading your order confirmation...</p>
+      </div>
+    );
+  }
+
+  if (error || (!order && orderIdFromUrl)) {
+    return (
+      <div className="w-full bg-background min-h-[70vh] flex items-center justify-center p-space-xl">
+        <div className="max-w-md w-full bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 p-space-xl text-center">
+          <div className="w-16 h-16 rounded-full bg-error-container/20 text-error flex items-center justify-center mx-auto mb-4">
+            <span className="material-symbols-outlined text-[36px]">error_outline</span>
+          </div>
+          <h2 className="font-headline-sm font-bold text-on-surface mb-2">Order Not Found</h2>
+          <p className="text-body-sm text-on-surface-variant mb-6">
+            {error || 'We could not retrieve the details for this order. It may belong to another account or the order ID is invalid.'}
+          </p>
+          <div className="flex flex-col gap-3">
+            {isLoggedIn ? (
+              <Button onClick={() => navigate('/orders')} className="w-full">
+                View My Orders
+              </Button>
+            ) : (
+              <Button onClick={() => navigate('/login', { state: { from: location } })} className="w-full">
+                Log In to View Order
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => navigate('/')} className="w-full">
+              Back to Home
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!order) {
     return <Navigate to="/" replace />;
   }
+
+  const orderDetails = order;
 
   const formatPaymentMethod = (method) => {
     if (method === 'cod') return 'Cash on Delivery';

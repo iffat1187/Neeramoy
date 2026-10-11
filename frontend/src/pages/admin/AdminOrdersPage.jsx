@@ -39,10 +39,26 @@ export const AdminOrdersPage = () => {
   };
 
   const filteredOrders = orders.filter(o => {
-    const q = searchQuery.toLowerCase();
-    const matchSearch = o.id.toLowerCase().includes(q) || (o.customer?.phone && o.customer.phone.includes(q)) || (o.customer?.name && o.customer.name.toLowerCase().includes(q));
+    const q = searchQuery.toLowerCase().trim();
+    const orderIdStr = (o.orderId || '').toLowerCase();
+    const idStr = (o.id || '').toLowerCase();
+    const customerName = (o.deliveryDetails?.fullName || o.customer?.name || '').toLowerCase();
+    const customerPhone = (o.deliveryDetails?.phone || o.customer?.phone || '').toLowerCase();
+
+    const matchSearch = !q ||
+      orderIdStr.includes(q) ||
+      idStr.includes(q) ||
+      customerName.includes(q) ||
+      customerPhone.includes(q);
+
     const matchStatus = filterStatus === 'All' || o.status === filterStatus;
-    const matchPayment = filterPayment === 'All' || o.paymentMethod === filterPayment;
+
+    const method = (o.paymentMethod || '').toLowerCase();
+    const matchPayment = filterPayment === 'All' ||
+      (filterPayment === 'cod' && (method === 'cod' || method === 'cash on delivery')) ||
+      (filterPayment === 'bkash' && method === 'bkash') ||
+      (filterPayment === 'online' && (method === 'online' || method === 'card'));
+
     return matchSearch && matchStatus && matchPayment;
   }).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
 
@@ -162,8 +178,9 @@ export const AdminOrdersPage = () => {
           onChange={handleFilterPayment}
         >
           <option value="All">All Payment Methods</option>
-          <option value="bKash">bKash</option>
-          <option value="Cash on Delivery">Cash on Delivery</option>
+          <option value="cod">Cash on Delivery</option>
+          <option value="bkash">bKash</option>
+          <option value="online">Online Payment</option>
         </select>
       </div>
 
@@ -183,7 +200,7 @@ export const AdminOrdersPage = () => {
             {paginatedItems.map(order => (
               <tr key={order.id} className="border-b border-outline-variant/20 hover:bg-surface-container transition-colors">
                 <td className="p-4">
-                  <div className="font-bold text-on-surface">{order.id}</div>
+                  <div className="font-bold text-on-surface">{order.orderId || order.id}</div>
                   <div className="text-[10px] text-on-surface-variant">{new Date(order.createdAt).toLocaleString('en-GB')}</div>
                 </td>
                 <td className="p-4">
