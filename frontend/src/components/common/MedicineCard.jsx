@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from './Card';
 import { Badge } from './Badge';
 import { Button } from './Button';
+import { FALLBACK_MEDICINE_IMAGE, handleImageError } from '../../utils/imageUtils';
 
 export const MedicineCard = ({ medicine, onAddToCart }) => {
   const navigate = useNavigate();
@@ -21,7 +22,12 @@ export const MedicineCard = ({ medicine, onAddToCart }) => {
         
         <div className="flex items-start gap-space-md">
           <div className="w-20 h-20 rounded-lg bg-surface-container flex items-center justify-center shrink-0 overflow-hidden">
-            <img src={medicine.image} alt={medicine.name} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal group-hover:scale-105 transition-transform" />
+            <img 
+              src={medicine.image || FALLBACK_MEDICINE_IMAGE} 
+              alt={medicine.name} 
+              onError={handleImageError}
+              className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal group-hover:scale-105 transition-transform" 
+            />
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="font-headline-sm text-headline-sm text-on-surface font-bold truncate group-hover:text-primary transition-colors">{medicine.name}</h3>

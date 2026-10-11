@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
 import { useCart } from '../context/CartContext';
+import { FALLBACK_MEDICINE_IMAGE, handleImageError } from '../utils/imageUtils';
 
 export const CartPage = () => {
   const navigate = useNavigate();
@@ -84,7 +85,12 @@ export const CartPage = () => {
                     {/* Details */}
                     <div className="col-span-6 flex gap-space-md w-full">
                       <div className="w-20 h-20 bg-surface-container-low rounded-xl border border-outline-variant/20 flex items-center justify-center p-1 shrink-0 cursor-pointer" onClick={() => navigate(`/product/${item.id}`)}>
-                        <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
+                        <img 
+                          src={item.image || FALLBACK_MEDICINE_IMAGE} 
+                          alt={item.name} 
+                          onError={handleImageError}
+                          className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" 
+                        />
                       </div>
                       <div className="flex flex-col justify-center flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">

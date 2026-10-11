@@ -93,31 +93,58 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<Order> getOrdersByCustomer(String customerId) {
-        return orderRepository.findByCustomerId(customerId);
+        List<Order> orders = orderRepository.findByCustomerId(customerId);
+        enrichOrderItems(orders);
+        return orders;
     }
 
     @Override
     public Order getOrderByIdAndCustomer(String orderId, String customerId) {
-        return orderRepository.findById(orderId)
+        Order order = orderRepository.findById(orderId)
                 .filter(o -> o.getCustomerId().equals(customerId))
                 .orElseGet(() -> orderRepository.findAll().stream()
                         .filter(o -> (orderId.equals(o.getId()) || orderId.equals(o.getOrderId())) && customerId.equals(o.getCustomerId()))
                         .findFirst()
                         .orElseThrow(() -> new IllegalArgumentException("Order not found or access denied")));
+        enrichOrderItem(order);
+        return order;
     }
 
     @Override
     public List<Order> getAllOrders() {
-        return orderRepository.findAll();
+        List<Order> orders = orderRepository.findAll();
+        enrichOrderItems(orders);
+        return orders;
     }
 
     @Override
     public Order getOrderById(String id) {
-        return orderRepository.findById(id)
+        Order order = orderRepository.findById(id)
                 .orElseGet(() -> orderRepository.findAll().stream()
                         .filter(o -> o.getId().equals(id) || o.getOrderId().equals(id))
                         .findFirst()
                         .orElseThrow(() -> new IllegalArgumentException("Order not found")));
+        enrichOrderItem(order);
+        return order;
+    }
+
+    private void enrichOrderItems(List<Order> orders) {
+        if (orders != null) {
+            for (Order o : orders) {
+                enrichOrderItem(o);
+            }
+        }
+    }
+
+    private void enrichOrderItem(Order order) {
+        if (order != null && order.getItems() != null) {
+            for (OrderItem item : order.getItems()) {
+                if ((item.getImage() == null || item.getImage().isBlank()) && item.getMedicineId() != null) {
+                    medicineRepository.findById(item.getMedicineId())
+                            .ifPresent(med -> item.setImage(med.getImage()));
+                }
+            }
+        }
     }
 
     @Override

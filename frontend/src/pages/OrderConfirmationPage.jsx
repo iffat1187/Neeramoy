@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Button } from '../components/common/Button';
 import { useCart } from '../context/CartContext';
+import { FALLBACK_MEDICINE_IMAGE, handleImageError } from '../utils/imageUtils';
 
 export const OrderConfirmationPage = () => {
   const location = useLocation();
@@ -107,7 +108,7 @@ export const OrderConfirmationPage = () => {
                     <div key={item.medicineId || item.id} className="py-space-md first:pt-0 last:pb-0 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-space-md min-w-0">
                         <div className="w-16 h-16 bg-surface-container-low rounded-lg p-1 shrink-0">
-                          <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
+                          <img src={item.image || FALLBACK_MEDICINE_IMAGE} alt={item.name} onError={handleImageError} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
                         </div>
                         <div className="min-w-0">
                           <h4 className="font-label-md font-bold text-on-surface truncate">{item.name}</h4>

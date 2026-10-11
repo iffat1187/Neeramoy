@@ -4,6 +4,7 @@ import { orderService } from '../../services/orderService';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { MOCK_MEDICINES } from '../../mockData/medicines';
+import { FALLBACK_MEDICINE_IMAGE, handleImageError } from '../../utils/imageUtils';
 
 export const AdminOrderDetailsPage = () => {
   const { orderId } = useParams();
@@ -254,7 +255,7 @@ export const AdminOrderDetailsPage = () => {
               <tbody>
                 {order.items?.map((item, idx) => {
                   const resolvedMed = MOCK_MEDICINES.find(m => m.id === item.id);
-                  const displayImage = resolvedMed?.image || item.image || 'https://via.placeholder.com/150';
+                  const displayImage = item.image || resolvedMed?.image || FALLBACK_MEDICINE_IMAGE;
                   const displayGeneric = resolvedMed?.genericName || '';
                   
                   return (
@@ -262,7 +263,7 @@ export const AdminOrderDetailsPage = () => {
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-lg bg-surface-container-highest/20 p-1 shrink-0">
-                            <img src={displayImage} alt={item.name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
+                            <img src={displayImage} alt={item.name} onError={handleImageError} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
                           </div>
                           <div className="flex flex-col">
                             <span className="font-medium text-on-surface text-body-sm">{item.name}</span>
