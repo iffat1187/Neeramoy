@@ -92,6 +92,13 @@ export const apiClient = {
     });
   },
 
+  async patch(endpoint, body) {
+    return this.request(endpoint, {
+      method: 'PATCH',
+      body: body !== undefined ? JSON.stringify(body) : undefined
+    });
+  },
+
   async delete(endpoint) {
     return this.request(endpoint, { method: 'DELETE' });
   }

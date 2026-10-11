@@ -16,6 +16,7 @@ export const AdminOrdersPage = () => {
   const [filterPayment, setFilterPayment] = useState('All');
 
   const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
   const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -80,15 +81,20 @@ export const AdminOrdersPage = () => {
   const handleApproveConfirm = async () => {
     if (!selectedOrder) return;
     try {
+      setErrorMsg('');
       await orderService.updateOrderStatusByAdmin(selectedOrder.id || selectedOrder.orderId, 'Confirmed');
-      setSuccessMsg(`Order ${selectedOrder.id || selectedOrder.orderId} has been approved.`);
+      setSuccessMsg(`Order ${selectedOrder.orderId || selectedOrder.id} has been approved.`);
       fetchOrders();
     } catch (err) {
-      alert(err.message || 'Failed to approve order');
+      setErrorMsg(err.message || 'Failed to approve order');
+    } finally {
+      setApproveModalOpen(false);
+      setSelectedOrder(null);
+      setTimeout(() => {
+        setSuccessMsg('');
+        setErrorMsg('');
+      }, 5000);
     }
-    setApproveModalOpen(false);
-    setSelectedOrder(null);
-    setTimeout(() => setSuccessMsg(''), 5000);
   };
 
   const handleCancelConfirm = async () => {
@@ -99,17 +105,22 @@ export const AdminOrdersPage = () => {
       return;
     }
     try {
+      setErrorMsg('');
       await orderService.updateOrderStatusByAdmin(selectedOrder.id || selectedOrder.orderId, 'Cancelled');
-      setSuccessMsg(`Order ${selectedOrder.id || selectedOrder.orderId} has been cancelled.`);
+      setSuccessMsg(`Order ${selectedOrder.orderId || selectedOrder.id} has been cancelled.`);
       fetchOrders();
     } catch (err) {
-      alert(err.message || 'Failed to cancel order');
+      setErrorMsg(err.message || 'Failed to cancel order');
+    } finally {
+      setCancelModalOpen(false);
+      setSelectedOrder(null);
+      setCancelReason('Customer requested');
+      setCustomReason('');
+      setTimeout(() => {
+        setSuccessMsg('');
+        setErrorMsg('');
+      }, 5000);
     }
-    setCancelModalOpen(false);
-    setSelectedOrder(null);
-    setCancelReason('Customer requested');
-    setCustomReason('');
-    setTimeout(() => setSuccessMsg(''), 5000);
   };
 
   const openApprove = (order) => {
@@ -140,6 +151,12 @@ export const AdminOrdersPage = () => {
         <div className="bg-primary-container text-on-primary-container p-3 rounded-lg font-bold flex items-center gap-2 mb-2 transition-all">
           <span className="material-symbols-outlined">check_circle</span>
           {successMsg}
+        </div>
+      )}
+      {errorMsg && (
+        <div className="bg-error-container text-on-error-container p-3 rounded-lg font-bold flex items-center gap-2 mb-2 transition-all">
+          <span className="material-symbols-outlined">error</span>
+          {errorMsg}
         </div>
       )}
       <div className="flex justify-between items-start mb-2">

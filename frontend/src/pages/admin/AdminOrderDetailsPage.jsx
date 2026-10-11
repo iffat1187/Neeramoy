@@ -15,6 +15,7 @@ export const AdminOrderDetailsPage = () => {
   const [error, setError] = useState('');
   
   const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   
   const [approveModalOpen, setApproveModalOpen] = useState(false);
@@ -59,26 +60,34 @@ export const AdminOrderDetailsPage = () => {
 
   const handleStatusChange = async (newStatus) => {
     try {
-      await orderService.updateOrderStatusByAdmin(order.id, newStatus);
+      setErrorMsg('');
+      await orderService.updateOrderStatusByAdmin(order.id || order.orderId, newStatus);
       setSuccessMsg(`Order status updated to ${newStatus}`);
       fetchOrder();
     } catch (err) {
-      alert(err.message || 'Failed to update status');
+      setErrorMsg(err.message || 'Failed to update status');
     }
     setStatusMenuOpen(false);
-    setTimeout(() => setSuccessMsg(''), 4000);
+    setTimeout(() => {
+      setSuccessMsg('');
+      setErrorMsg('');
+    }, 4000);
   };
 
   const handleApproveOrder = async () => {
     try {
-      await orderService.updateOrderStatusByAdmin(order.id, 'Confirmed');
+      setErrorMsg('');
+      await orderService.updateOrderStatusByAdmin(order.id || order.orderId, 'Confirmed');
       setApproveModalOpen(false);
       setSuccessMsg('Order approved successfully.');
       fetchOrder();
     } catch (err) {
-      alert(err.message || 'Failed to approve order');
+      setErrorMsg(err.message || 'Failed to approve order');
     }
-    setTimeout(() => setSuccessMsg(''), 4000);
+    setTimeout(() => {
+      setSuccessMsg('');
+      setErrorMsg('');
+    }, 4000);
   };
 
   const handleCancelOrder = async () => {
@@ -88,16 +97,20 @@ export const AdminOrderDetailsPage = () => {
       return;
     }
     try {
-      await orderService.updateOrderStatusByAdmin(order.id, 'Cancelled');
+      setErrorMsg('');
+      await orderService.updateOrderStatusByAdmin(order.id || order.orderId, 'Cancelled');
       setCancelModalOpen(false);
       setSuccessMsg('Order cancelled successfully.');
       fetchOrder();
     } catch (err) {
-      alert(err.message || 'Failed to cancel order');
+      setErrorMsg(err.message || 'Failed to cancel order');
     }
     setCancelReason('Customer requested');
     setCustomReason('');
-    setTimeout(() => setSuccessMsg(''), 4000);
+    setTimeout(() => {
+      setSuccessMsg('');
+      setErrorMsg('');
+    }, 4000);
   };
 
   const getStatusBadge = (status) => {
@@ -123,6 +136,12 @@ export const AdminOrderDetailsPage = () => {
           {successMsg}
         </div>
       )}
+      {errorMsg && (
+        <div className="bg-error-container text-on-error-container p-3 rounded-lg font-bold flex items-center gap-2 transition-all">
+          <span className="material-symbols-outlined">error</span>
+          {errorMsg}
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
@@ -135,7 +154,7 @@ export const AdminOrderDetailsPage = () => {
           </button>
           <div className="flex flex-col">
             <h1 className="font-headline-md font-bold text-on-surface flex items-center gap-3">
-              Order {order.id}
+              Order {order.orderId || order.id}
               {getStatusBadge(order.status)}
             </h1>
             <span className="text-body-sm text-on-surface-variant">Placed on {new Date(order.createdAt).toLocaleString('en-GB')}</span>
