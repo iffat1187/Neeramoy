@@ -156,11 +156,19 @@ export const Navbar = () => {
           {isLoggedIn ? (
             <div className="hidden lg:flex items-center gap-3 pl-space-xs cursor-pointer group relative">
               <div className="flex items-center gap-2 group-hover:opacity-80">
-                <div className="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold">
-                  {user.name.charAt(0)}
-                </div>
+                {user?.profileImage ? (
+                  <img
+                    src={user.profileImage}
+                    alt={user.name || 'User'}
+                    className="w-9 h-9 rounded-full object-cover border border-outline-variant/30"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold">
+                    {user?.name?.charAt(0) || 'U'}
+                  </div>
+                )}
                 <div className="flex flex-col text-left">
-                  <span className="font-label-sm font-bold text-on-surface">{user.name.split(' ')[0]}</span>
+                  <span className="font-label-sm font-bold text-on-surface">{user?.name ? user.name.split(' ')[0] : 'Account'}</span>
                   <span className="text-[10px] text-on-surface-variant">Account</span>
                 </div>
               </div>

@@ -9,6 +9,9 @@ import com.neeramoy.model.User;
 import com.neeramoy.repository.UserRepository;
 import com.neeramoy.security.JwtUtils;
 import com.neeramoy.service.AuthService;
+import com.neeramoy.service.ImageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,11 +20,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 
 @Service
 public class AuthServiceImpl implements AuthService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -34,6 +42,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private JwtUtils jwtUtils;
+
+    @Autowired
+    private ImageService imageService;
 
     @Override
     public AuthResponse register(RegisterRequest registerRequest) {
@@ -74,21 +85,9 @@ public class AuthServiceImpl implements AuthService {
                 .orElseGet(() -> userRepository.findByPhone(loginRequest.getEmail())
                         .orElseThrow(() -> new UsernameNotFoundException("User not found with email/phone")));
 
-        UserDTO userDTO = UserDTO.builder()
-                .name(user.getFullName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .role(user.getRole().name())
-                .addresses(new ArrayList<>())
-                .address(user.getAddress() != null ? user.getAddress() : "")
-                .city(user.getCity() != null ? user.getCity() : "")
-                .area(user.getArea() != null ? user.getArea() : "")
-                .postalCode(user.getPostalCode() != null ? user.getPostalCode() : "")
-                .build();
-
         return AuthResponse.builder()
                 .token(jwt)
-                .user(userDTO)
+                .user(mapToUserDTO(user))
                 .message("Login successful")
                 .build();
     }
@@ -99,6 +98,44 @@ public class AuthServiceImpl implements AuthService {
                 .orElseGet(() -> userRepository.findByPhone(username)
                         .orElseThrow(() -> new UsernameNotFoundException("User not found with username")));
                         
+        return mapToUserDTO(user);
+    }
+
+    @Override
+    public UserDTO updateProfilePicture(String username, MultipartFile file) {
+        User user = userRepository.findByEmail(username)
+                .orElseGet(() -> userRepository.findByPhone(username)
+                        .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username)));
+
+        Map<String, String> uploadResult;
+        try {
+            uploadResult = imageService.uploadImage(file);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload profile picture: " + e.getMessage(), e);
+        }
+
+        String oldPublicId = user.getProfileImagePublicId();
+        String newImageUrl = uploadResult.get("url");
+        String newPublicId = uploadResult.get("publicId");
+
+        // 1. Persist new image first
+        user.setProfileImage(newImageUrl);
+        user.setProfileImagePublicId(newPublicId);
+        userRepository.save(user);
+
+        // 2. Safely attempt to delete old image if present
+        if (oldPublicId != null && !oldPublicId.trim().isEmpty()) {
+            try {
+                imageService.deleteImage(oldPublicId);
+            } catch (Exception ex) {
+                logger.warn("Failed to delete old Cloudinary profile image with publicId: {}", oldPublicId, ex);
+            }
+        }
+
+        return mapToUserDTO(user);
+    }
+
+    private UserDTO mapToUserDTO(User user) {
         return UserDTO.builder()
                 .name(user.getFullName())
                 .email(user.getEmail())
@@ -109,6 +146,8 @@ public class AuthServiceImpl implements AuthService {
                 .city(user.getCity() != null ? user.getCity() : "")
                 .area(user.getArea() != null ? user.getArea() : "")
                 .postalCode(user.getPostalCode() != null ? user.getPostalCode() : "")
+                .profileImage(user.getProfileImage() != null ? user.getProfileImage() : "")
+                .profileImagePublicId(user.getProfileImagePublicId() != null ? user.getProfileImagePublicId() : "")
                 .build();
     }
 }

@@ -131,9 +131,17 @@ export const AdminLayout = () => {
               <div className="absolute top-0 right-0 w-2 h-2 rounded-full bg-error"></div>
             </div>
             <Link to="/admin/profile" className="flex items-center gap-2 ml-2 hover:bg-surface-container p-1 rounded-lg transition-colors cursor-pointer">
-              <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold">
-                {user?.name?.charAt(0) || 'A'}
-              </div>
+              {user?.profileImage ? (
+                <img
+                  src={user.profileImage}
+                  alt={user?.name || 'Administrator'}
+                  className="w-8 h-8 rounded-full object-cover border border-outline-variant/30"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold">
+                  {user?.name?.charAt(0) || 'A'}
+                </div>
+              )}
               <div className="flex flex-col">
                 <span className="text-[12px] font-bold text-on-surface">{user?.name || 'Administrator'}</span>
                 <span className="text-[10px] text-on-surface-variant">{user?.role || 'Superintendent'}</span>

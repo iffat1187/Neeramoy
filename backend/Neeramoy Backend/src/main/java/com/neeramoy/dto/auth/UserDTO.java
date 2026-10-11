@@ -17,4 +17,6 @@ public class UserDTO {
     private String city;
     private String area;
     private String postalCode;
+    private String profileImage;
+    private String profileImagePublicId;
 }

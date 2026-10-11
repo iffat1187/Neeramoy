@@ -52,4 +52,23 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
         }
     }
+
+    @RequestMapping(value = "/profile-picture", method = {RequestMethod.POST, RequestMethod.PUT})
+    public ResponseEntity<?> updateProfilePicture(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(java.util.Map.of("message", "User not authenticated"));
+        }
+        try {
+            String username = authentication.getName();
+            UserDTO user = authService.updateProfilePicture(username, file);
+            return ResponseEntity.ok(user);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(java.util.Map.of("message", "Failed to update profile picture: " + e.getMessage()));
+        }
+    }
 }

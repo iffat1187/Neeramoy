@@ -15,6 +15,8 @@ export const RegisterPage = () => {
     password: '',
     confirmPassword: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
 
   const from = location.state?.from?.pathname || '/';
@@ -96,21 +98,47 @@ export const RegisterPage = () => {
           </div>
           <div>
             <label className="block font-label-md text-on-surface mb-1">Password *</label>
-            <input 
-              type="password" name="password"
-              value={formData.password} onChange={handleInputChange}
-              className="w-full px-4 py-2.5 rounded-xl border border-outline-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-surface"
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input 
+                type={showPassword ? 'text' : 'password'} name="password"
+                value={formData.password} onChange={handleInputChange}
+                className="w-full px-4 py-2.5 pr-11 rounded-xl border border-outline-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-surface text-on-surface"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(prev => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface p-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 flex items-center justify-center transition-colors"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                tabIndex={0}
+              >
+                <span className="material-symbols-outlined text-[20px] select-none">
+                  {showPassword ? 'visibility_off' : 'visibility'}
+                </span>
+              </button>
+            </div>
           </div>
           <div>
             <label className="block font-label-md text-on-surface mb-1">Confirm Password *</label>
-            <input 
-              type="password" name="confirmPassword"
-              value={formData.confirmPassword} onChange={handleInputChange}
-              className="w-full px-4 py-2.5 rounded-xl border border-outline-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-surface"
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input 
+                type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword"
+                value={formData.confirmPassword} onChange={handleInputChange}
+                className="w-full px-4 py-2.5 pr-11 rounded-xl border border-outline-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-surface text-on-surface"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(prev => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface p-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 flex items-center justify-center transition-colors"
+                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                tabIndex={0}
+              >
+                <span className="material-symbols-outlined text-[20px] select-none">
+                  {showConfirmPassword ? 'visibility_off' : 'visibility'}
+                </span>
+              </button>
+            </div>
           </div>
 
           <Button type="submit" className="w-full py-3.5 text-[16px] mt-2">Create Account</Button>

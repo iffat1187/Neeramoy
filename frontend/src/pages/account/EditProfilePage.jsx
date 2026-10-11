@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
+import { ProfileAvatarUpload } from '../../components/common/ProfileAvatarUpload';
 
 export const EditProfilePage = () => {
   const { user, updateUser } = useAuth();
@@ -69,6 +70,17 @@ export const EditProfilePage = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="p-space-md md:p-space-xl space-y-space-xl">
+        {/* Profile Picture Section */}
+        <div className="p-space-md bg-surface-container-low rounded-xl border border-outline-variant/30 flex flex-col sm:flex-row items-center sm:items-start gap-space-lg">
+          <ProfileAvatarUpload size="lg" showSubtext={true} />
+          <div className="flex-1 text-center sm:text-left">
+            <h4 className="font-headline-sm font-bold text-on-surface">Profile Picture</h4>
+            <p className="font-body-sm text-on-surface-variant mt-1">
+              Upload or replace your profile photo (JPEG, PNG, or WebP up to 5 MB).
+            </p>
+          </div>
+        </div>
+
         {/* Personal Information */}
         <div>
           <h3 className="font-headline-sm font-bold text-on-surface flex items-center gap-2 mb-space-md">

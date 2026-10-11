@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
+import { ProfileAvatarUpload } from '../../components/common/ProfileAvatarUpload';
 
 export const ProfilePage = () => {
   const { user } = useAuth();
@@ -50,17 +51,12 @@ export const ProfilePage = () => {
       <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30">
         <div className="p-space-md md:p-space-xl border-b border-outline-variant/30 flex flex-col md:flex-row md:items-center justify-between gap-space-md">
           <div className="flex items-center gap-space-md">
-            <div className="w-16 h-16 rounded-full bg-primary text-on-primary flex items-center justify-center font-headline-md font-bold relative">
-              {user?.name?.charAt(0) || 'U'}
-              <div className="absolute bottom-0 right-0 w-5 h-5 bg-secondary text-on-secondary rounded-full flex items-center justify-center border border-surface-container-lowest">
-                <span className="material-symbols-outlined text-[12px]">verified</span>
-              </div>
-            </div>
+            <ProfileAvatarUpload size="sm" showSubtext={false} />
             <div>
               <h2 className="font-headline-sm font-bold text-on-surface">{user?.name}</h2>
               <p className="font-body-sm text-on-surface-variant flex items-center gap-1">
                 <span className="material-symbols-outlined text-[14px]">badge</span> 
-                NM-CUST-98214
+                {user?.role === 'ADMIN' ? 'NM-ADMIN-001' : 'NM-CUST-98214'}
               </p>
             </div>
           </div>
@@ -72,6 +68,17 @@ export const ProfilePage = () => {
         </div>
 
         <div className="p-space-md md:p-space-xl space-y-space-xl">
+          {/* Profile Picture Section */}
+          <div className="p-space-md bg-surface-container-low rounded-xl border border-outline-variant/30 flex flex-col sm:flex-row items-center sm:items-start gap-space-lg">
+            <ProfileAvatarUpload size="lg" showSubtext={true} />
+            <div className="flex-1 text-center sm:text-left">
+              <h4 className="font-headline-sm font-bold text-on-surface">Profile Picture</h4>
+              <p className="font-body-sm text-on-surface-variant mt-1">
+                Upload or replace your profile photo (JPEG, PNG, or WebP up to 5 MB). Your photo will appear in the navigation bar and across your account.
+              </p>
+            </div>
+          </div>
+
           {/* Personal Information */}
           <div>
             <h3 className="font-headline-sm font-bold text-on-surface flex items-center gap-2 mb-space-md">

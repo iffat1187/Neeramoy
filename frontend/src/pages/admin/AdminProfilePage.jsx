@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
+import { ProfileAvatarUpload } from '../../components/common/ProfileAvatarUpload';
 
 export const AdminProfilePage = () => {
   const { user, updateUser } = useAuth();
@@ -98,12 +99,7 @@ export const AdminProfilePage = () => {
         {/* Left Column: Profile Card */}
         <div className="w-full lg:w-1/3 flex flex-col gap-space-md">
           <Card className="p-space-lg flex flex-col items-center text-center">
-            <div className="w-32 h-32 rounded-full bg-primary text-on-primary flex items-center justify-center font-headline-xl font-bold mb-4 relative shadow-lg">
-              {user?.name?.charAt(0) || 'A'}
-              <div className="absolute bottom-1 right-1 w-8 h-8 bg-success text-on-primary rounded-full flex items-center justify-center border-4 border-surface">
-                <span className="material-symbols-outlined text-[16px]">verified</span>
-              </div>
-            </div>
+            <ProfileAvatarUpload size="xl" showSubtext={true} className="mb-2" />
             <h2 className="font-headline-sm font-bold text-on-surface">{user?.name}</h2>
             <p className="text-primary font-label-md font-bold mt-1 uppercase tracking-wider">{user?.role || 'ADMINISTRATOR'}</p>
             

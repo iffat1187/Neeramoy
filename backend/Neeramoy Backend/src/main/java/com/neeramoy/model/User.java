@@ -36,4 +36,8 @@ public class User {
     private String city;
     private String area;
     private String postalCode;
+
+    // Profile avatar
+    private String profileImage;
+    private String profileImagePublicId;
 }

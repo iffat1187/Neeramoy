@@ -23,8 +23,16 @@ export const AccountLayout = () => {
         {/* Sidebar */}
         <div className="hidden md:block w-72 shrink-0">
           <div className="bg-surface-container-low rounded-2xl p-space-md border border-outline-variant/30 flex flex-col items-center mb-space-md">
-            <div className="w-20 h-20 rounded-full bg-primary text-on-primary flex items-center justify-center font-headline-xl font-bold mb-space-sm relative">
-              {user?.name?.charAt(0) || 'U'}
+            <div className="w-20 h-20 rounded-full bg-primary text-on-primary flex items-center justify-center font-headline-xl font-bold mb-space-sm relative overflow-hidden border border-outline-variant/30">
+              {user?.profileImage ? (
+                <img
+                  src={user.profileImage}
+                  alt={user?.name || 'User'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                user?.name?.charAt(0) || 'U'
+              )}
               <div className="absolute bottom-0 right-0 w-6 h-6 bg-secondary text-on-secondary rounded-full flex items-center justify-center border-2 border-surface-container-low">
                 <span className="material-symbols-outlined text-[14px]">verified</span>
               </div>
