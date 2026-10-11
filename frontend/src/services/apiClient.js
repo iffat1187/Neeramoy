@@ -25,10 +25,15 @@ export const apiClient = {
       if (!response.ok) {
         let errorMessage = 'An error occurred while fetching data';
         try {
-          const errData = await response.json();
-          errorMessage = errData.message || errorMessage;
+          const text = await response.text();
+          try {
+            const errData = JSON.parse(text);
+            errorMessage = errData.message || errData.error || text || errorMessage;
+          } catch {
+            errorMessage = text || errorMessage;
+          }
         } catch (e) {
-          // not json
+          // not readable
         }
         throw new Error(errorMessage);
       }
@@ -50,6 +55,34 @@ export const apiClient = {
       method: 'POST',
       body: JSON.stringify(body)
     });
+  },
+  
+  async postFormData(endpoint, formData) {
+    const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`;
+    const token = localStorage.getItem('token');
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: formData
+      });
+      if (!response.ok) {
+        let errorMessage = 'Upload failed';
+        try {
+          const errData = await response.json();
+          errorMessage = errData.message || errorMessage;
+        } catch (e) {}
+        throw new Error(errorMessage);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`[API Error] ${endpoint}:`, error);
+      throw error;
+    }
   },
   
   async put(endpoint, body) {

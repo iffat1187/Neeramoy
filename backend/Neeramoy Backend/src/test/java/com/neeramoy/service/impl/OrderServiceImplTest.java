@@ -143,4 +143,52 @@ public class OrderServiceImplTest {
         });
         assertTrue(e.getMessage().contains("not found or access denied"));
     }
+
+    @Test
+    void updateOrderStatus_validStatus_success() {
+        Order order = new Order();
+        order.setId("ord1");
+        order.setStatus("Pending");
+        when(orderRepository.findById("ord1")).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(i -> i.getArgument(0));
+
+        Order result = orderService.updateOrderStatus("ord1", "Shipped");
+        assertEquals("Shipped", result.getStatus());
+    }
+
+    @Test
+    void updateOrderStatus_invalidStatus_throwsException() {
+        Order order = new Order();
+        order.setId("ord1");
+        order.setStatus("Pending");
+        when(orderRepository.findById("ord1")).thenReturn(Optional.of(order));
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            orderService.updateOrderStatus("ord1", "InvalidStatus");
+        });
+    }
+
+    @Test
+    void updateOrderStatus_alreadyCancelled_throwsException() {
+        Order order = new Order();
+        order.setId("ord1");
+        order.setStatus("Cancelled");
+        when(orderRepository.findById("ord1")).thenReturn(Optional.of(order));
+
+        assertThrows(IllegalStateException.class, () -> {
+            orderService.updateOrderStatus("ord1", "Shipped");
+        });
+    }
+
+    @Test
+    void updateOrderStatus_alreadyDelivered_throwsException() {
+        Order order = new Order();
+        order.setId("ord1");
+        order.setStatus("Delivered");
+        when(orderRepository.findById("ord1")).thenReturn(Optional.of(order));
+
+        assertThrows(IllegalStateException.class, () -> {
+            orderService.updateOrderStatus("ord1", "Shipped");
+        });
+    }
 }

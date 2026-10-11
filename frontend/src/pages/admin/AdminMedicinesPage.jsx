@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { medicineService } from '../../services/medicineService';
@@ -11,26 +11,77 @@ export const AdminMedicinesPage = () => {
   const { isDarkMode } = useTheme();
   const [medicines, setMedicines] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
   const [filterType, setFilterType] = useState('All');
   
+  // Notification state
+  const [successNotification, setSuccessNotification] = useState('');
+  const successTimeoutRef = useRef(null);
+
+  const showSuccess = (msg) => {
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+    }
+    setSuccessNotification(msg);
+    successTimeoutRef.current = setTimeout(() => {
+      setSuccessNotification('');
+    }, 3000);
+  };
+
+  const dismissSuccess = () => {
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+    }
+    setSuccessNotification('');
+  };
+
+  useEffect(() => {
+    return () => {
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [uploadedImage, setUploadedImage] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    medicineService.getAll().then(data => {
-      // Add a stock mock value if not present, and active status
-      const processed = data.map(m => ({
-        ...m,
-        stock: m.stock !== undefined ? m.stock : (m.inStock ? Math.floor(Math.random() * 50) + 10 : 0),
-        active: m.active !== undefined ? m.active : true
-      }));
-      setMedicines(processed);
-      setLoading(false);
-    });
+    fetchMedicines();
   }, []);
+
+  const fetchMedicines = () => {
+    setLoading(true);
+    setFetchError(null);
+    medicineService.getAll({ size: 1000 })
+      .then(data => {
+        const rawList = Array.isArray(data) 
+          ? data 
+          : (Array.isArray(data?.content) ? data.content : []);
+        // Add a stock mock value if not present, and active status
+        const processed = rawList.map(m => ({
+          ...m,
+          stock: m.stock !== undefined ? m.stock : (m.inStock ? Math.floor(Math.random() * 50) + 10 : 0),
+          active: m.active !== undefined ? m.active : true
+        }));
+        setMedicines(processed);
+      })
+      .catch(err => {
+        console.error('Failed to load medicines catalog:', err);
+        setFetchError(err.message || 'Failed to load medicines catalog');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
 
   // Calculate KPIs
   const totalMedicines = medicines.length;
@@ -98,49 +149,185 @@ export const AdminMedicinesPage = () => {
 
   const handleEdit = (medicine) => {
     setEditingMedicine(medicine);
+    setImagePreview(medicine.image || '');
+    setImageFile(null);
+    setUploadedImage(null);
+    setErrorMsg('');
     setIsModalOpen(true);
   };
 
   const handleAddNew = () => {
     setEditingMedicine(null);
+    setImagePreview('');
+    setImageFile(null);
+    setUploadedImage(null);
+    setErrorMsg('');
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
+    if (isUploading) return;
     setIsModalOpen(false);
     setEditingMedicine(null);
+    setImagePreview('');
+    setImageFile(null);
+    setUploadedImage(null);
+    setErrorMsg('');
   };
 
-  const handleSave = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const medData = {
-      name: formData.get('name'),
-      genericName: formData.get('genericName'),
-      manufacturer: formData.get('manufacturer'),
-      category: formData.get('category'),
-      price: parseFloat(formData.get('price')),
-      stock: parseInt(formData.get('stock')),
-      isOtc: formData.get('type') === 'OTC',
-      active: true,
-      image: editingMedicine?.image || 'https://via.placeholder.com/150'
-    };
-
-    if (editingMedicine) {
-      setMedicines(medicines.map(m => m.id === editingMedicine.id ? { ...m, ...medData } : m));
-    } else {
-      setMedicines([...medicines, { ...medData, id: 'm' + Date.now() }]);
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setErrorMsg('Image size must be less than 5MB');
+        return;
+      }
+      setImageFile(file);
+      setUploadedImage(null);
+      setImagePreview(URL.createObjectURL(file));
+      setErrorMsg('');
     }
-    closeModal();
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (isUploading) return;
+    
+    setErrorMsg('');
+    const formData = new FormData(e.target);
+
+    const name = formData.get('name')?.trim();
+    if (!name) {
+      setErrorMsg('Medicine name is required');
+      return;
+    }
+
+    const priceRaw = formData.get('price');
+    const price = parseFloat(priceRaw);
+    if (!priceRaw || isNaN(price) || price <= 0) {
+      setErrorMsg('Price is required and must be greater than zero');
+      return;
+    }
+
+    const stockRaw = formData.get('stock');
+    const stock = stockRaw ? parseInt(stockRaw, 10) : 0;
+    if (isNaN(stock) || stock < 0) {
+      setErrorMsg('Stock quantity must be a non-negative number');
+      return;
+    }
+
+    let imageUrl = uploadedImage?.url || editingMedicine?.image || 'https://via.placeholder.com/150';
+    let imageId = uploadedImage?.publicId || editingMedicine?.imageId || null;
+    
+    if (!editingMedicine && !imageFile && !uploadedImage) {
+      setErrorMsg('An image is required for new medicines');
+      return;
+    }
+
+    setIsUploading(true);
+    
+    try {
+      if (imageFile) {
+        const uploadRes = await medicineService.uploadImage(imageFile);
+        imageUrl = uploadRes.url;
+        imageId = uploadRes.publicId;
+        setUploadedImage({ url: imageUrl, publicId: imageId });
+        setImagePreview(imageUrl);
+        setImageFile(null);
+      }
+
+      const medData = {
+        ...(editingMedicine || {}),
+        name: name,
+        genericName: formData.get('genericName')?.trim() || '',
+        manufacturer: formData.get('manufacturer')?.trim() || '',
+        category: formData.get('category') || 'fever',
+        price: price,
+        stock: stock,
+        inStock: stock > 0,
+        isOtc: formData.get('type') === 'OTC',
+        active: editingMedicine?.active !== undefined ? editingMedicine.active : true,
+        image: imageUrl,
+        imageId: imageId
+      };
+
+      if (editingMedicine) {
+        const updated = await medicineService.update(editingMedicine.id, medData);
+        setMedicines(medicines.map(m => m.id === editingMedicine.id ? { ...m, ...updated } : m));
+        closeModal();
+        showSuccess('Medicine updated successfully!');
+      } else {
+        const created = await medicineService.create(medData);
+        setMedicines([created, ...medicines]);
+        closeModal();
+        showSuccess('Medicine added successfully!');
+      }
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to save medicine');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   if (loading) {
-    return <div className="p-6 text-on-surface">Loading catalog...</div>;
+    return (
+      <div className="p-space-lg flex flex-col items-center justify-center min-h-[400px] text-center">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+        <p className="font-body-lg text-on-surface font-medium">Loading catalog...</p>
+        <p className="text-body-sm text-on-surface-variant mt-1">Fetching medicines and inventory data</p>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="p-space-lg flex flex-col gap-space-lg">
+        <div className="flex flex-col gap-1">
+          <h1 className="font-headline-lg text-headline-lg font-bold text-on-surface">Medicines & Catalog</h1>
+          <p className="font-body-md text-body-md text-on-surface-variant">Manage medicines, categories, pricing, stock, Rx/OTC status, and availability.</p>
+        </div>
+        <Card className="p-12 flex flex-col items-center justify-center text-center border-error/30">
+          <span className="material-symbols-outlined text-[48px] text-error mb-4">error_outline</span>
+          <h3 className="font-headline-sm font-bold text-on-surface mb-2">Failed to load medicines</h3>
+          <p className="text-body-sm text-on-surface-variant max-w-md mb-6">{fetchError}</p>
+          <button
+            onClick={fetchMedicines}
+            className="flex items-center gap-2 bg-primary text-on-primary px-5 py-2.5 rounded-lg font-label-md font-bold hover:bg-primary/90 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[20px]">refresh</span>
+            Retry
+          </button>
+        </Card>
+      </div>
+    );
   }
 
   return (
-    <div className="p-space-lg flex flex-col gap-space-lg">
-      
+    <div className="p-space-lg flex flex-col gap-space-lg relative">
+      {/* Success Toast Notification */}
+      {successNotification && (
+        <div 
+          role="status"
+          aria-live="polite"
+          className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] max-w-md w-auto px-5 py-3 rounded-xl bg-surface-container-lowest text-on-surface border border-secondary/40 shadow-2xl flex items-center gap-3 backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-top-3"
+        >
+          <div className="w-8 h-8 rounded-full bg-secondary/15 text-secondary flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-[20px]">check_circle</span>
+          </div>
+          <span className="font-label-lg font-bold text-on-surface text-body-md select-none">
+            {successNotification}
+          </span>
+          <button 
+            onClick={dismissSuccess}
+            className="ml-2 p-1 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors flex items-center justify-center shrink-0"
+            title="Dismiss notification"
+            aria-label="Dismiss notification"
+          >
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
         <div className="flex flex-col gap-1">
@@ -313,11 +500,30 @@ export const AdminMedicinesPage = () => {
 
         {/* Table */}
         <div className="overflow-x-auto">
-          {filteredMedicines.length === 0 ? (
+          {medicines.length === 0 ? (
+            <div className="p-12 flex flex-col items-center justify-center text-center">
+              <span className="material-symbols-outlined text-[48px] text-outline-variant mb-4">medication</span>
+              <h3 className="font-headline-sm font-bold text-on-surface mb-2">No medicines in catalog</h3>
+              <p className="text-body-sm text-on-surface-variant max-w-md mb-6">Your inventory is currently empty. Start by adding your first medicine.</p>
+              <button 
+                onClick={handleAddNew}
+                className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md font-bold hover:bg-primary/90 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[20px]">add</span>
+                Add Medicine
+              </button>
+            </div>
+          ) : filteredMedicines.length === 0 ? (
             <div className="p-12 flex flex-col items-center justify-center text-center">
               <span className="material-symbols-outlined text-[48px] text-outline-variant mb-4">search_off</span>
-              <h3 className="font-headline-sm text-on-surface mb-2">No medicines found</h3>
-              <p className="text-body-sm text-on-surface-variant max-w-md">Try adjusting your search query or filters to find what you're looking for.</p>
+              <h3 className="font-headline-sm text-on-surface mb-2">No matching medicines found</h3>
+              <p className="text-body-sm text-on-surface-variant max-w-md mb-4">Try adjusting your search query or filters to find what you're looking for.</p>
+              <button 
+                onClick={() => { setSearchQuery(''); setFilterCategory('All'); setFilterType('All'); }}
+                className="text-primary text-body-sm font-bold hover:underline"
+              >
+                Clear all filters
+              </button>
             </div>
           ) : (
             <table className="w-full text-left border-collapse">
@@ -421,7 +627,30 @@ export const AdminMedicinesPage = () => {
               </button>
             </div>
             <div className="p-space-md overflow-y-auto">
+              {errorMsg && (
+                <div className="mb-4 p-3 bg-error-container text-on-error-container rounded-lg font-body-sm">
+                  {errorMsg}
+                </div>
+              )}
               <form id="medicineForm" onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+                <div className="flex flex-col gap-1 md:col-span-2">
+                  <label className="font-label-sm font-bold text-on-surface">Medicine Image</label>
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 bg-surface-container rounded-lg border border-outline-variant/30 flex items-center justify-center overflow-hidden shrink-0">
+                      {imagePreview ? (
+                        <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
+                      ) : (
+                        <span className="material-symbols-outlined text-outline text-[32px]">image</span>
+                      )}
+                    </div>
+                    <input 
+                      type="file" 
+                      accept="image/jpeg, image/png, image/webp" 
+                      onChange={handleImageChange}
+                      className="block w-full text-body-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+                    />
+                  </div>
+                </div>
                 <div className="flex flex-col gap-1 md:col-span-2">
                   <label className="font-label-sm font-bold text-on-surface">Medicine Name</label>
                   <input name="name" defaultValue={editingMedicine?.name} required className="bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:border-primary" />
@@ -464,8 +693,17 @@ export const AdminMedicinesPage = () => {
               </form>
             </div>
             <div className="p-space-md border-t border-outline-variant/30 flex justify-end gap-3 bg-surface-container-low mt-auto">
-              <button onClick={closeModal} className="px-4 py-2 rounded-lg font-label-md font-bold text-on-surface hover:bg-surface-container-high transition-colors">Cancel</button>
-              <button form="medicineForm" type="submit" className="px-4 py-2 rounded-lg font-label-md font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors">Save Medicine</button>
+              <button onClick={closeModal} disabled={isUploading} className="px-4 py-2 rounded-lg font-label-md font-bold text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50">Cancel</button>
+              <button form="medicineForm" type="submit" disabled={isUploading} className="px-4 py-2 rounded-lg font-label-md font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2">
+                {isUploading ? (
+                  <>
+                    <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                    Saving...
+                  </>
+                ) : (
+                  'Save Medicine'
+                )}
+              </button>
             </div>
           </div>
         </div>

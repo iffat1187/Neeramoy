@@ -134,6 +134,16 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order updateOrderStatus(String orderId, String status) {
         Order order = getOrderById(orderId);
+        
+        List<String> validStatuses = List.of("Pending", "Confirmed", "Processing", "Shipped", "Delivered", "Cancelled");
+        if (!validStatuses.contains(status)) {
+            throw new IllegalArgumentException("Invalid status: " + status);
+        }
+        
+        if ("Cancelled".equalsIgnoreCase(order.getStatus()) || "Delivered".equalsIgnoreCase(order.getStatus())) {
+            throw new IllegalStateException("Cannot change status of an order that is already " + order.getStatus() + ".");
+        }
+        
         order.setStatus(status);
         order.setUpdatedAt(LocalDateTime.now());
         return orderRepository.save(order);

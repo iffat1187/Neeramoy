@@ -13,5 +13,24 @@ export const medicineService = {
   },
   async getCategories() {
     return apiClient.get('/categories');
+  },
+  
+  // Admin Methods
+  async create(medicineData) {
+    return apiClient.post('/admin/medicines', medicineData);
+  },
+  
+  async update(id, medicineData) {
+    return apiClient.put(`/admin/medicines/${id}`, medicineData);
+  },
+  
+  async delete(id) {
+    return apiClient.delete(`/admin/medicines/${id}`);
+  },
+  
+  async uploadImage(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiClient.postFormData('/admin/images/upload', formData);
   }
 };

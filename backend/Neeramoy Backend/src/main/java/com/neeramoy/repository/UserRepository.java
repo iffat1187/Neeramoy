@@ -1,5 +1,6 @@
 package com.neeramoy.repository;
 
+import com.neeramoy.enums.Role;
 import com.neeramoy.model.User;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
@@ -12,4 +13,5 @@ public interface UserRepository extends MongoRepository<User, String> {
     Optional<User> findByPhone(String phone);
     Boolean existsByEmail(String email);
     Boolean existsByPhone(String phone);
+    Boolean existsByRole(Role role);
 }

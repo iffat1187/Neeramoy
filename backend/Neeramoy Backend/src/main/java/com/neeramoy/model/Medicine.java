@@ -21,19 +21,32 @@ public class Medicine {
     private String genericName;
     private String manufacturer;
     @com.fasterxml.jackson.annotation.JsonProperty("isOtc")
-    private boolean isOtc;
+    private Boolean isOtc;
     private String form;
     private String packSize;
-    private double price;
-    private double originalPrice;
-    private double discount;
+    private Double price;
+    private Double originalPrice;
+    private Double discount;
     private String unit;
-    private double rating;
+    private Double rating;
     private String category;
-    private boolean inStock;
+    private Boolean inStock;
+    private Integer stock;
     private String description;
     private List<String> indications;
     private String howToUse;
     private String safetyInfo;
     private String image;
+    private String imageId;
+
+    public boolean isInStock() {
+        if (this.inStock != null) {
+            return this.inStock;
+        }
+        return this.stock != null && this.stock > 0;
+    }
+
+    public boolean isOtc() {
+        return Boolean.TRUE.equals(this.isOtc);
+    }
 }
