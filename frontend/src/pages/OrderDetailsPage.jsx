@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { orderService } from '../services/orderService';
 import { Button } from '../components/common/Button';
+import { CancelOrderConfirmationModal } from '../components/common/CancelOrderConfirmationModal';
 import { FALLBACK_MEDICINE_IMAGE, handleImageError } from '../utils/imageUtils';
 
 export const OrderDetailsPage = () => {
@@ -13,6 +14,7 @@ export const OrderDetailsPage = () => {
   const [error, setError] = useState('');
   const [cancelling, setCancelling] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -44,18 +46,17 @@ export const OrderDetailsPage = () => {
     );
   }
 
-  const handleCancelOrder = async () => {
-     if (window.confirm("Are you sure you want to cancel this order?")) {
-        try {
-           setCancelling(true);
-           const updated = await orderService.cancelOrder(order.id);
-           setOrder(updated);
-        } catch (err) {
-           alert(err.message || 'Failed to cancel order');
-        } finally {
-           setCancelling(false);
-        }
-     }
+  const handleConfirmCancelOrder = async () => {
+    try {
+      setCancelling(true);
+      const updated = await orderService.cancelOrder(order.id);
+      setOrder(updated);
+      setIsCancelModalOpen(false);
+    } catch (err) {
+      alert(err.message || 'Failed to cancel order');
+    } finally {
+      setCancelling(false);
+    }
   };
 
   const handleRetryPayment = async () => {
@@ -256,7 +257,7 @@ export const OrderDetailsPage = () => {
           {(order.status === 'Pending' || order.status === 'Confirmed' || order.status === 'Processing') && (
              <div className="bg-error-container/10 rounded-2xl border border-error/20 p-space-lg text-center">
                 <p className="text-body-sm text-on-surface-variant mb-4">Need to cancel this order? You can only cancel before it is shipped.</p>
-                <Button variant="outline" className="w-full text-error border-error hover:bg-error-container/20" onClick={handleCancelOrder} disabled={cancelling}>
+                <Button variant="outline" className="w-full text-error border-error hover:bg-error-container/20" onClick={() => setIsCancelModalOpen(true)} disabled={cancelling}>
                    {cancelling ? 'Cancelling...' : 'Cancel Order'}
                 </Button>
              </div>
@@ -264,6 +265,13 @@ export const OrderDetailsPage = () => {
 
         </div>
       </div>
+
+      <CancelOrderConfirmationModal
+        isOpen={isCancelModalOpen}
+        onClose={() => !cancelling && setIsCancelModalOpen(false)}
+        onConfirm={handleConfirmCancelOrder}
+        loading={cancelling}
+      />
     </div>
   );
 };
