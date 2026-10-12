@@ -1,8 +1,42 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:10000/api';
+export const getBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim()) {
+    return envUrl.trim();
+  }
+  return import.meta.env.PROD
+    ? 'https://neeramoy.onrender.com/api'
+    : 'http://localhost:8888/api';
+};
+
+export const buildUrl = (endpoint = '') => {
+  if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
+    return endpoint;
+  }
+
+  const rawBase = getBaseUrl().replace(/\/+$/, '');
+  const hasApiSuffix = rawBase.endsWith('/api');
+  const origin = hasApiSuffix ? rawBase.slice(0, -4) : rawBase;
+  const apiRoot = hasApiSuffix ? rawBase : `${rawBase}/api`;
+
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+  if (cleanEndpoint === '/api' || cleanEndpoint === '/api/' || cleanEndpoint.startsWith('/api?') || cleanEndpoint.startsWith('/api/?')) {
+    const queryPart = cleanEndpoint.includes('?') ? cleanEndpoint.slice(cleanEndpoint.indexOf('?')) : '';
+    return `${apiRoot}${queryPart}`;
+  }
+
+  if (cleanEndpoint.startsWith('/api/')) {
+    return `${origin}${cleanEndpoint}`;
+  }
+
+  return `${apiRoot}${cleanEndpoint}`;
+};
+
+export const BASE_URL = getBaseUrl();
 
 export const apiClient = {
   async request(endpoint, options = {}) {
-    const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`;
+    const url = buildUrl(endpoint);
     const headers = {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -58,7 +92,7 @@ export const apiClient = {
   },
   
   async postFormData(endpoint, formData) {
-    const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`;
+    const url = buildUrl(endpoint);
     const token = localStorage.getItem('token');
     const headers = {};
     if (token) {
