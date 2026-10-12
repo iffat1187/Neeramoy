@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { CustomerLayout } from './components/layout/CustomerLayout';
 import { AdminLayout } from './components/layout/AdminLayout';
 import { PlaceholderPage } from './pages/PlaceholderPage';
@@ -73,6 +73,7 @@ function App() {
               <Route path="prescriptions" element={<ProtectedRoute><AccountLayout /></ProtectedRoute>}>
                 <Route index element={<PrescriptionsPage />} />
               </Route>
+              <Route path="prescription" element={<Navigate to="/prescriptions" replace />} />
 
               {/* Orders under AccountLayout */}
               <Route path="orders" element={<ProtectedRoute><AccountLayout /></ProtectedRoute>}>
@@ -81,7 +82,7 @@ function App() {
               </Route>
             </Route>
 
-            <Route path="/admin" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminLayout /></ProtectedRoute>}>
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={['ADMIN', 'PHARMACY_STAFF']}><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminDashboardPage />} />
               <Route path="prescriptions" element={<AdminPrescriptionsPage />} />
               <Route path="orders" element={<AdminOrdersPage />} />

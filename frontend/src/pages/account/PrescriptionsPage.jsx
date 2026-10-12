@@ -1,26 +1,26 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
-import { useAuth } from '../../context/AuthContext';
 import { usePrescription } from '../../context/PrescriptionContext';
 
 export const PrescriptionsPage = () => {
-  const { prescriptions, addPrescription, deletePrescription } = usePrescription();
-  const { user } = useAuth();
+  const { customerPrescriptions, prescriptions, addPrescription, deletePrescription, loading, error, refreshPrescriptions } = usePrescription();
   
   const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadError, setUploadError] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [deletingId, setDeletingId] = useState(null);
   const [viewingRx, setViewingRx] = useState(null);
   const fileInputRef = useRef(null);
   
-  // Filter only the active user's prescriptions based on phone matching mock data structure
-  // In a real app, this would use customerId or happen via backend query
-  const userPrescriptions = prescriptions.filter(rx => rx.phone === user?.phone || user?.phone === undefined);
+  // Real customer prescriptions (backend filters by authenticated user)
+  const userPrescriptions = customerPrescriptions || prescriptions || [];
 
-  const pendingCount = userPrescriptions.filter(rx => rx.status === 'PENDING').length;
-  const approvedCount = userPrescriptions.filter(rx => rx.status === 'APPROVED').length;
-  const rejectedCount = userPrescriptions.filter(rx => rx.status === 'REJECTED').length;
+  const pendingCount = userPrescriptions.filter(rx => rx.status?.toUpperCase() === 'PENDING').length;
+  const approvedCount = userPrescriptions.filter(rx => rx.status?.toUpperCase() === 'APPROVED').length;
+  const rejectedCount = userPrescriptions.filter(rx => rx.status?.toUpperCase() === 'REJECTED').length;
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -50,40 +50,49 @@ export const PrescriptionsPage = () => {
     }
   };
 
-  const handleUploadSubmit = () => {
-    if (!selectedFile) return;
+  const handleUploadSubmit = async () => {
+    if (!selectedFile?.file) return;
 
-    const newRx = {
-      id: `RX-${Math.floor(1000 + Math.random() * 9000)}`,
-      title: `Uploaded - ${selectedFile.file.name.substring(0, 15)}...`,
-      uploadDate: new Date().toISOString(),
-      status: 'PENDING',
-      fileName: selectedFile.file.name,
-      type: selectedFile.type === 'pdf' ? 'pdf' : 'image',
-      preview: selectedFile.preview || 'https://via.placeholder.com/400x500.png?text=PDF+Document',
-      customerName: user?.name || 'Unknown',
-      phone: user?.phone || 'Unknown'
-    };
+    setIsSubmitting(true);
+    setUploadError('');
 
-    addPrescription(newRx);
-    setSelectedFile(null);
-    setIsUploading(false);
-    
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    try {
+      await addPrescription(selectedFile.file);
+      setSelectedFile(null);
+      setIsUploading(false);
+      
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (err) {
+      setUploadError(err.message || 'Failed to upload prescription. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this prescription?')) {
-      deletePrescription(id);
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this prescription? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeletingId(id);
+    setDeleteError('');
+
+    try {
+      await deletePrescription(id);
       if (viewingRx && viewingRx.id === id) setViewingRx(null);
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete prescription. Please try again.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
   const getStatusBadge = (status) => {
-    if (status === 'APPROVED') return <Badge variant="success" text="Approved" />;
-    if (status === 'REJECTED') return <Badge variant="error" text="Rejected" />;
+    const s = status?.toUpperCase();
+    if (s === 'APPROVED') return <Badge variant="success" text="Approved" />;
+    if (s === 'REJECTED') return <Badge variant="error" text="Rejected" />;
     return <Badge variant="warning" text="Pending" />;
   };
 
@@ -91,14 +100,16 @@ export const PrescriptionsPage = () => {
     if (!isoString) return '';
     try {
       const d = new Date(isoString);
-      return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+      return isNaN(d.getTime()) ? isoString : d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
     } catch {
-      return isoString; // fallback
+      return isoString;
     }
   };
 
   // Preview Modal
   if (viewingRx) {
+    const isPdf = viewingRx.type === 'pdf' || viewingRx.fileUrl?.toLowerCase().endsWith('.pdf') || viewingRx.fileType?.includes('pdf');
+
     return (
       <div className="space-y-space-md">
         <button onClick={() => setViewingRx(null)} className="text-primary hover:underline text-body-sm font-bold flex items-center gap-1 mb-2">
@@ -108,35 +119,76 @@ export const PrescriptionsPage = () => {
         <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 overflow-hidden shadow-sm">
           <div className="bg-surface-container-low px-space-lg py-space-md border-b border-outline-variant/30 flex items-center justify-between">
             <div>
-              <h2 className="font-headline-sm font-bold text-on-surface">{viewingRx.title}</h2>
-              <p className="font-body-sm text-on-surface-variant">ID: {viewingRx.id} • Uploaded: {formatDate(viewingRx.uploadDate)}</p>
+              <h2 className="font-headline-sm font-bold text-on-surface">{viewingRx.title || viewingRx.fileName}</h2>
+              <p className="font-body-sm text-on-surface-variant">ID: {viewingRx.id} • Uploaded: {formatDate(viewingRx.uploadDate || viewingRx.createdAt)}</p>
             </div>
             {getStatusBadge(viewingRx.status)}
           </div>
           
           <div className="p-space-lg">
-            {viewingRx.status === 'REJECTED' && viewingRx.rejectionReason && (
+            {viewingRx.status?.toUpperCase() === 'REJECTED' && viewingRx.rejectionReason && (
               <div className="mb-space-lg p-space-md bg-error-container/20 border border-error/30 rounded-xl">
                 <p className="font-label-md font-bold text-error mb-1">Rejection Reason:</p>
                 <p className="text-body-sm text-on-surface">{viewingRx.rejectionReason}</p>
               </div>
             )}
+
+            {deleteError && (
+              <div className="mb-space-lg p-space-md bg-error-container/20 border border-error/30 rounded-xl text-error text-body-sm">
+                {deleteError}
+              </div>
+            )}
             
             <div className="bg-surface-container-low rounded-xl border border-outline-variant/30 flex items-center justify-center p-space-md min-h-[400px]">
-              {viewingRx.type === 'pdf' ? (
-                <div className="text-center">
+              {isPdf ? (
+                <div className="text-center p-space-lg">
                   <span className="material-symbols-outlined text-[64px] text-primary mb-4">picture_as_pdf</span>
-                  <p className="font-label-lg font-bold text-on-surface">{viewingRx.fileName}</p>
+                  <p className="font-label-lg font-bold text-on-surface mb-2">{viewingRx.fileName}</p>
+                  {viewingRx.fileUrl ? (
+                    <a
+                      href={viewingRx.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl font-label-md font-bold hover:opacity-90 transition-opacity mt-2"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">open_in_new</span>
+                      Open / Download PDF
+                    </a>
+                  ) : (
+                    <p className="text-body-sm text-on-surface-variant">PDF Document</p>
+                  )}
                 </div>
               ) : (
-                <img src={viewingRx.preview} alt="Prescription" className="max-w-full max-h-[600px] object-contain rounded-lg shadow-sm" />
+                <div className="flex flex-col items-center">
+                  <img 
+                    src={viewingRx.fileUrl || viewingRx.preview} 
+                    alt={viewingRx.fileName || "Prescription"} 
+                    className="max-w-full max-h-[600px] object-contain rounded-lg shadow-sm" 
+                  />
+                  {viewingRx.fileUrl && (
+                    <a
+                      href={viewingRx.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-primary text-body-sm font-bold hover:underline mt-3"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+                      Open full resolution image
+                    </a>
+                  )}
+                </div>
               )}
             </div>
           </div>
           
           <div className="bg-surface-container-lowest p-space-lg border-t border-outline-variant/30 flex justify-end">
-            <Button variant="outline" className="text-error border-error hover:bg-error-container/10" onClick={() => handleDelete(viewingRx.id)}>
-              Delete Prescription
+            <Button 
+              variant="outline" 
+              className="text-error border-error hover:bg-error-container/10" 
+              onClick={() => handleDelete(viewingRx.id)}
+              disabled={deletingId === viewingRx.id}
+            >
+              {deletingId === viewingRx.id ? 'Deleting...' : 'Delete Prescription'}
             </Button>
           </div>
         </div>
@@ -192,9 +244,11 @@ export const PrescriptionsPage = () => {
           {uploadError && <p className="text-error text-body-sm mt-space-sm">{uploadError}</p>}
 
           <div className="flex gap-space-md mt-space-xl justify-end">
-            <Button variant="outline" onClick={() => { setIsUploading(false); setSelectedFile(null); setUploadError(''); }}>Cancel</Button>
-            <Button variant="primary" onClick={handleUploadSubmit} disabled={!selectedFile}>
-              Upload Prescription
+            <Button variant="outline" onClick={() => { setIsUploading(false); setSelectedFile(null); setUploadError(''); }} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleUploadSubmit} disabled={!selectedFile || isSubmitting}>
+              {isSubmitting ? 'Uploading...' : 'Upload Prescription'}
             </Button>
           </div>
         </div>
@@ -215,6 +269,22 @@ export const PrescriptionsPage = () => {
         </Button>
       </div>
 
+      {deleteError && (
+        <div className="p-space-md bg-error-container/20 border border-error/30 rounded-xl text-error text-body-sm flex items-center justify-between">
+          <span>{deleteError}</span>
+          <button onClick={() => setDeleteError('')} className="material-symbols-outlined text-[18px]">close</button>
+        </div>
+      )}
+
+      {error && (
+        <div className="p-space-md bg-error-container/20 border border-error/30 rounded-xl text-error text-body-sm flex items-center justify-between">
+          <span>{error}</span>
+          <Button variant="outline" className="py-1 px-3 text-xs border-error text-error" onClick={refreshPrescriptions}>
+            Retry
+          </Button>
+        </div>
+      )}
+
       <div className="grid grid-cols-3 gap-space-md mb-6">
         <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-space-md text-center">
           <p className="font-headline-md font-bold text-on-surface">{pendingCount}</p>
@@ -230,7 +300,12 @@ export const PrescriptionsPage = () => {
         </div>
       </div>
 
-      {userPrescriptions.length === 0 ? (
+      {loading && userPrescriptions.length === 0 ? (
+        <div className="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 p-space-2xl text-center mt-6">
+          <span className="material-symbols-outlined text-[40px] text-primary animate-spin mb-space-md">progress_activity</span>
+          <p className="font-body-md text-on-surface-variant">Loading your prescriptions...</p>
+        </div>
+      ) : userPrescriptions.length === 0 ? (
         <div className="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 p-space-2xl text-center mt-6">
           <div className="w-20 h-20 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-space-md">
             <span className="material-symbols-outlined text-[40px] text-outline">prescriptions</span>
@@ -241,37 +316,53 @@ export const PrescriptionsPage = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-space-md">
-          {userPrescriptions.map(rx => (
-            <div key={rx.id} className="bg-surface-container-lowest p-space-md rounded-2xl border border-outline-variant/30 flex gap-space-md shadow-sm">
-              <div className="w-24 h-24 bg-surface-container-low rounded-xl flex items-center justify-center shrink-0 border border-outline-variant/30 overflow-hidden relative">
-                {rx.type === 'pdf' ? (
-                  <span className="material-symbols-outlined text-[32px] text-primary">picture_as_pdf</span>
-                ) : (
-                  <img src={rx.preview} alt="Prescription" className="w-full h-full object-cover" />
-                )}
-              </div>
-              <div className="flex flex-col justify-between flex-1 min-w-0">
-                <div>
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-label-lg font-bold text-on-surface truncate pr-4">{rx.title}</h3>
-                    <div className="shrink-0">{getStatusBadge(rx.status)}</div>
-                  </div>
-                  <p className="font-body-sm text-on-surface-variant">Uploaded: {formatDate(rx.uploadDate)}</p>
-                  {rx.status === 'REJECTED' && rx.rejectionReason && (
-                    <p className="text-[12px] text-error mt-1 truncate">Reason: {rx.rejectionReason}</p>
+          {userPrescriptions.map(rx => {
+            const isPdf = rx.type === 'pdf' || rx.fileUrl?.toLowerCase().endsWith('.pdf') || rx.fileType?.includes('pdf');
+            return (
+              <div key={rx.id} className="bg-surface-container-lowest p-space-md rounded-2xl border border-outline-variant/30 flex gap-space-md shadow-sm">
+                <div className="w-24 h-24 bg-surface-container-low rounded-xl flex items-center justify-center shrink-0 border border-outline-variant/30 overflow-hidden relative">
+                  {isPdf ? (
+                    <span className="material-symbols-outlined text-[32px] text-primary">picture_as_pdf</span>
+                  ) : (
+                    <img 
+                      src={rx.fileUrl || rx.preview} 
+                      alt={rx.fileName || "Prescription"} 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.parentElement.innerHTML = '<span class="material-symbols-outlined text-[32px] text-outline">description</span>';
+                      }}
+                    />
                   )}
                 </div>
-                <div className="flex gap-space-md mt-space-sm">
-                  <Button variant="outline" className="flex-1 py-1 text-primary border-primary hover:bg-primary-container/10 text-label-sm" onClick={() => setViewingRx(rx)}>
-                    View Details
-                  </Button>
-                  <Button variant="outline" className="flex-1 py-1 text-error border-error hover:bg-error-container/10 text-label-sm" onClick={() => handleDelete(rx.id)}>
-                    Delete
-                  </Button>
+                <div className="flex flex-col justify-between flex-1 min-w-0">
+                  <div>
+                    <div className="flex justify-between items-start mb-1">
+                      <h3 className="font-label-lg font-bold text-on-surface truncate pr-4">{rx.title || rx.fileName}</h3>
+                      <div className="shrink-0">{getStatusBadge(rx.status)}</div>
+                    </div>
+                    <p className="font-body-sm text-on-surface-variant">Uploaded: {formatDate(rx.uploadDate || rx.createdAt)}</p>
+                    {rx.status?.toUpperCase() === 'REJECTED' && rx.rejectionReason && (
+                      <p className="text-[12px] text-error mt-1 truncate">Reason: {rx.rejectionReason}</p>
+                    )}
+                  </div>
+                  <div className="flex gap-space-md mt-space-sm">
+                    <Button variant="outline" className="flex-1 py-1 text-primary border-primary hover:bg-primary-container/10 text-label-sm" onClick={() => setViewingRx(rx)}>
+                      View Details
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="flex-1 py-1 text-error border-error hover:bg-error-container/10 text-label-sm" 
+                      onClick={() => handleDelete(rx.id)}
+                      disabled={deletingId === rx.id}
+                    >
+                      {deletingId === rx.id ? 'Deleting...' : 'Delete'}
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

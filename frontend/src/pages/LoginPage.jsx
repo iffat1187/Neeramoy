@@ -19,10 +19,12 @@ export const LoginPage = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     if (isLoggedIn && user) {
-      if (user.role === 'ADMIN') {
+      if (from && from !== '/') {
+        navigate(from, { replace: true });
+      } else if (user.role === 'ADMIN' || user.role === 'PHARMACY_STAFF') {
         navigate('/admin', { replace: true });
       } else {
-        navigate(from, { replace: true });
+        navigate('/', { replace: true });
       }
     }
   }, [isLoggedIn, user, navigate, from]);

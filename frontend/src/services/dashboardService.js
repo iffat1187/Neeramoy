@@ -16,7 +16,7 @@ export const buildDashboardData = (orders, inventory, prescriptions, customers) 
   const todayOrders = todayOrdersList.length;
   
   const pendingOrdersCount = orders.filter(o => o.status === 'Pending').length;
-  const pendingPrescriptionsCount = prescriptions.filter(p => p.status === 'Pending').length;
+  const pendingPrescriptionsCount = prescriptions.filter(p => p.status?.toUpperCase() === 'PENDING').length;
   const lowStockItems = inventory.filter(i => i.stock <= i.reorderLevel && i.stock > 0);
   const outOfStockItems = inventory.filter(i => i.stock === 0);
   const lowStockCount = lowStockItems.length + outOfStockItems.length;
@@ -112,7 +112,7 @@ export const buildDashboardData = (orders, inventory, prescriptions, customers) 
     needsAttention: {
       pendingOrders: orders.filter(o => o.status === 'Pending').slice(0,3),
       lowStockItems: [...lowStockItems, ...outOfStockItems].sort((a,b) => a.stock - b.stock).slice(0,3),
-      pendingPrescriptions: prescriptions.filter(p => p.status === 'Pending').slice(0,3)
+      pendingPrescriptions: prescriptions.filter(p => p.status?.toUpperCase() === 'PENDING').slice(0,3)
     },
     customerOverview: {
       total: customers.length,
@@ -125,8 +125,8 @@ export const buildDashboardData = (orders, inventory, prescriptions, customers) 
     },
     prescriptionOverview: {
       pending: pendingPrescriptionsCount,
-      approved: prescriptions.filter(p => p.status === 'Approved').length,
-      rejected: prescriptions.filter(p => p.status === 'Rejected').length
+      approved: prescriptions.filter(p => p.status?.toUpperCase() === 'APPROVED').length,
+      rejected: prescriptions.filter(p => p.status?.toUpperCase() === 'REJECTED').length
     }
   };
 };

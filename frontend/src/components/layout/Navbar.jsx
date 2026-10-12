@@ -113,7 +113,16 @@ export const Navbar = () => {
         </form>
         
         <div className="flex items-center gap-space-md shrink-0">
-          <button onClick={() => navigate('/login')} className="hidden lg:flex items-center gap-2 bg-primary-container text-on-primary-container px-space-md py-2.5 rounded-xl font-label-lg font-bold hover:bg-primary hover:text-on-primary transition-all">
+          <button 
+            onClick={() => {
+              if (isLoggedIn) {
+                navigate('/prescriptions');
+              } else {
+                navigate('/login', { state: { from: { pathname: '/prescriptions' } } });
+              }
+            }} 
+            className="hidden lg:flex items-center gap-2 bg-primary-container text-on-primary-container px-space-md py-2.5 rounded-xl font-label-lg font-bold hover:bg-primary hover:text-on-primary transition-all"
+          >
             <span className="material-symbols-outlined text-[20px]">upload_file</span>
             <span>প্রেসক্রিপশন আপলোড</span>
           </button>

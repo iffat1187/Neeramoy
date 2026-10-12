@@ -74,7 +74,7 @@ public class SecurityConfig {
                                  "/api/payment/sslcommerz/fail",
                                  "/api/payment/sslcommerz/cancel",
                                  "/api/payment/sslcommerz/ipn").permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "PHARMACY_STAFF")
                 .anyRequest().authenticated()
             );
         

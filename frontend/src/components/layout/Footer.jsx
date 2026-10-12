@@ -45,7 +45,7 @@ export const Footer = () => {
             <h4 className="font-headline-sm text-headline-sm text-on-surface font-bold">Quick Links</h4>
             <div className="flex flex-col gap-2 font-body-sm">
               <Link to="/search" className="hover:text-primary transition-colors">Medicine Categories</Link>
-              <Link to="/login" className="hover:text-primary transition-colors">Upload Prescription / Help</Link>
+              <Link to="/prescriptions" className="hover:text-primary transition-colors">Upload Prescription / Help</Link>
               <Link to="/about" className="hover:text-primary transition-colors">About Neeramoy</Link>
               <Link to="/admin" className="hover:text-primary transition-colors text-outline">Pharmacy Admin Portal</Link>
             </div>
