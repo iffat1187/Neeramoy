@@ -56,7 +56,15 @@ export const Footer = () => {
             <p className="font-body-sm mb-3">We support seamless digital payments and cash on delivery across Bangladesh.</p>
             <div className="flex flex-wrap gap-3">
               <div className="bg-surface-container-lowest w-16 h-10 rounded-lg border border-outline-variant/50 shadow-sm flex items-center justify-center p-1.5 hover:border-outline-variant transition-colors">
-                <img src="https://commons.wikimedia.org/wiki/Special:FilePath/BKash_Logo.svg" alt="bKash" className="w-full h-full object-contain" />
+                <img
+                  src="/bkash.png"
+                  alt="bKash"
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "https://upload.wikimedia.org/wikipedia/commons/c/cb/BKash-Bangla-Logo-01.png";
+                  }}
+                />
               </div>
               <div className="bg-surface-container-lowest w-16 h-10 rounded-lg border border-outline-variant/50 shadow-sm flex items-center justify-center p-1.5 hover:border-outline-variant transition-colors">
                 <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Rocket_mobile_banking_logo.svg" alt="Rocket" className="w-full h-full object-contain" />
