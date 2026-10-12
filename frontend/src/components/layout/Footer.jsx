@@ -79,7 +79,7 @@ export const Footer = () => {
         <div className="pt-space-lg border-t border-outline-variant/30 text-[11px] text-outline leading-relaxed space-y-2">
           <p><strong>Disclaimer:</strong> Neeramoy is a licensed retail pharmacy platform. Information provided is for educational purposes and not a substitute for professional medical advice.</p>
           <div className="flex flex-col sm:flex-row items-center justify-between pt-space-md gap-space-sm font-label-sm">
-            <p>© 2024 Neeramoy Healthcare Bangladesh Ltd. All Rights Reserved.</p>
+            <p>© 2026 Neeramoy Healthcare Bangladesh Ltd. All Rights Reserved. • Created by Iffat Jahan</p>
             <div className="flex items-center gap-space-md text-on-surface-variant">
               <Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
               <Link to="/terms" className="hover:text-primary transition-colors">Terms & Conditions</Link>
